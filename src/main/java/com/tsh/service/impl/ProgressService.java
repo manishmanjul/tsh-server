@@ -1,9 +1,7 @@
 package com.tsh.service.impl;
 
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -20,8 +18,8 @@ import com.tsh.entities.TopicProgress;
 import com.tsh.entities.TopicStatus;
 import com.tsh.entities.Topics;
 import com.tsh.exception.TSHException;
-import com.tsh.library.dto.StudentFeedbackResponseTO;
-import com.tsh.library.dto.StudentResponseTO;
+import com.tsh.library.dto.StudentFeedbackRequestTO;
+import com.tsh.library.dto.StudentRequestTO;
 import com.tsh.repositories.BatchProgressRepository;
 import com.tsh.repositories.CourseRepository;
 import com.tsh.repositories.StudentBatchesRepository;
@@ -48,68 +46,139 @@ public class ProgressService implements IProgressService{
 	@Autowired
 	private StudentBatchesRepository studentBatchRepo;
 	
-	@Override
-	public Topics getPreviousTopic(BatchDetails batchDetails) throws ParseException, TSHException {
-		
-		Calendar now = Calendar.getInstance();
-		now.add(Calendar.DATE, -7);
-		
-		Date startOfWeek = TshUtil.getFirstDayOfWeek(now.getTime());
-		Date endOfWeek = TshUtil.getLastDayOfWeek(now.getTime());
-		return getBatchProgressForWeek(batchDetails, startOfWeek, endOfWeek);
-	}
+	/**
+	 * Returns the last topic that was started for this batch. 
+	 * The batch progress can be in any state and not necessarily was taken in the last week. 
+	 * It could be on any date. We just want the one with latest start date.
+	 */
+//	@Override
+//	public Topics getPreviousTopic(BatchDetails batchDetails) throws ParseException, TSHException {
+//		Topics topicToReturn = null ;
+//		List<BatchProgress> batchProgressList = null;
+//
+//		batchProgressList = batchProgressRepo.findAllByBatchDetailsOrderByStartDateDesc(batchDetails);
+//		if(batchProgressList.size() > 0)
+//			topicToReturn = batchProgressList.get(0).getTopic();
+//		else {
+//			topicToReturn = new Topics();
+//			topicToReturn.setDescription("No Previous Topic found for this batch");
+//		}
+//		
+//		return topicToReturn;
+//	}
 
+	/**
+	 * The method will return a topic that is expected to be learned today. The search begins in the BatchProgress Table.
+	 * If there is a batch progress that is in progress and today is the batch class day, then the topic in the latest in-progress
+	 * Batch Progress is returned. In case there are no in-progress BatchProgress, then the method will look for any planned 
+	 * Batch Progress and will return its topic only if the class date and planned date are same. Otherwise a blank topic
+	 * is returned.
+	 */
 	@Override
 	public Topics getCurrentTopic(BatchDetails batchDetails) throws ParseException, TSHException {
-				
-		Date startOfWeek = TshUtil.getFirstDayOfCurrentWeek();
-		Date endOfWeek = TshUtil.getLastDayOfCurrentWeek();
-		return getBatchProgressForWeek(batchDetails, startOfWeek, endOfWeek);
-	}
-
-	@Override
-	public Topics getNextTopic(BatchDetails batchDetails) throws ParseException, TSHException {
-		Calendar now = Calendar.getInstance();
-		now.add(Calendar.DATE, 7);
+			
+		Topics topicToReturn = null;
+		Calendar startOfWeek = Calendar.getInstance();
+		startOfWeek.setTime(TshUtil.getFirstDayOfCurrentWeek());
+		Calendar endOfWeek = Calendar.getInstance();
+		endOfWeek.setTime(TshUtil.getLastDayOfCurrentWeek());
 		
-		Date startOfWeek = TshUtil.getFirstDayOfWeek(now.getTime());
-		Date endOfWeek = TshUtil.getLastDayOfWeek(now.getTime());
-		return getBatchProgressForWeek(batchDetails, startOfWeek, endOfWeek);
-	}
-
-	private Topics getBatchProgressForWeek(BatchDetails batchDetails, Date startDate, Date endDate) throws TSHException{
-		Topics topic = new Topics();
-		BatchProgress currentBatchProgress = null;
-		topic.setDescription("Data not available or First batch.");
-		
-		TopicStatus inProgress = topicStatusRepo.findByStatus("In Progress");
-		List<BatchProgress> inProgressBatchProgress = batchProgressRepo.findByBatchDetailsAndStatusOrderByStartDateDesc(batchDetails, inProgress);
-		if(inProgressBatchProgress.size() > 0)
-			currentBatchProgress = inProgressBatchProgress.get(0);
-		
-		TopicStatus planned = topicStatusRepo.findByStatus("Planned");		
-		List<BatchProgress> plannedBatchProgress = batchProgressRepo.findByBatchDetailsAndStatusOrderByPlannedStartDateDesc(batchDetails, planned);
-		for(BatchProgress progress : plannedBatchProgress) {
-			Date plannedDate = TshUtil.format(progress.getPlannedStartDate());
-			if((plannedDate.equals(TshUtil.format(startDate)) || plannedDate.after(TshUtil.format(startDate))) & (plannedDate.equals(TshUtil.format(endDate)) || plannedDate.before(TshUtil.format(endDate))))
-				currentBatchProgress = progress;				
+		// If this batch class timing is not today. return an empty topic.
+		if(!batchDetails.isCLassToday()) {
+			topicToReturn = new Topics();
+			topicToReturn.setDescription("No Topic assigned for Today");
+			return topicToReturn;
 		}
 		
-		if(currentBatchProgress != null)
-			topic = currentBatchProgress.getTopic();
+		// Find if there is any Batch progress in In Progress status. Fetch the latest one. 
+		topicToReturn = findInProgressTopic(batchDetails);
+
+		// By now we either have a topic from an in progress batch progress or the topic to return is still null;
+		// Either way, we check if there is anything planned. A batch progress that is planned will 
+		// take precedence over in progress topic. So check if there is anything planned.
+		topicToReturn = findPlannedTopicBetween(batchDetails, startOfWeek, endOfWeek);
 		
-		return topic;
+		if(topicToReturn == null) {
+			topicToReturn = new Topics();
+			topicToReturn.setDescription("No Topic assigned for today");
+		}
+		
+		return topicToReturn;
+	}
+
+	/**
+	 * This method will return a topic that is expected to start next week or next clas.
+	 * Will check the Batch progress table. 
+	 * If there is a batch progress planned for next class. It will return that topic else if there is anything in progress
+	 * it will return the topic in progress. If nothing found, it will return an Empty topic.
+	 */
+	@Override
+	public Topics getNextTopic(BatchDetails batchDetails) throws ParseException, TSHException {
+		Topics topicToReturn = null;
+		
+		// If the class is not today then return topic that is in progress or planned for this week. 
+		// Planned topic takes precedence over in progress. 
+		// If class is today then apply the same logic but for next week.
+		if(!batchDetails.isCLassToday()) {
+			Calendar startOfWeek = Calendar.getInstance();
+			startOfWeek.setTime(TshUtil.getFirstDayOfCurrentWeek());
+			Calendar endOfWeek = Calendar.getInstance();
+			endOfWeek.setTime(TshUtil.getLastDayOfCurrentWeek());
+			
+			// Find if there is any Batch progress in In Progress status. Fetch the latest one. 
+			topicToReturn = findInProgressTopic(batchDetails);
+			
+			// By now we either have a topic from an in progress batch progress or the topic to return is still null;
+			// Either way, we check if there is anything planned. A batch progress that is planned will 
+			// take precedence over in progress topic. So check if there is anything planned.
+			topicToReturn = findPlannedTopicBetween(batchDetails, startOfWeek, endOfWeek);
+		} else {
+			Calendar now = Calendar.getInstance();
+			now.add(Calendar.DATE, 7);
+			
+			Calendar startOfNextWeek = Calendar.getInstance();
+			startOfNextWeek.setTime(TshUtil.getFirstDayOfWeek(now.getTime()));
+			Calendar endOfNextWeek = Calendar.getInstance();
+			endOfNextWeek.setTime(TshUtil.getLastDayOfWeek(now.getTime()));
+			
+			// Only the planned topic for next week. As the in progress topic would be started and updated today.
+			topicToReturn = findPlannedTopicBetween(batchDetails, startOfNextWeek, endOfNextWeek);
+		}
+		
+		if(topicToReturn == null) {
+			topicToReturn = new Topics();
+			topicToReturn.setDescription("No Topic planned for Next Class");
+		}
+		
+		return topicToReturn;
 	}
 	
-	private Topics getPlannedBatchProgressForWeek(BatchDetails batchDetails, Date startDate, Date endDate) {
-		Topics topic = new Topics();
-		topic.setDescription("Data not available or First batch.");
+	private Topics findInProgressTopic(BatchDetails batchDetails) {
+		Topics topicToReturn = null;
+		TopicStatus inProgress = topicStatusRepo.findByStatus("In Progress");
 		
-		BatchProgress batchProgress = batchProgressRepo.findByBatchDetailsAndPlannedStartDateBetween(batchDetails, startDate, endDate);
-		if(batchProgress != null)
-			topic = batchProgress.getTopic();
+		List<BatchProgress> batchProgressList = batchProgressRepo.findByBatchDetailsAndStatusOrderByStartDateDesc(batchDetails, inProgress);
+		if(batchProgressList.size() > 0) {
+			topicToReturn = batchProgressList.get(0).getTopic();
+		}
 		
-		return topic;
+		return topicToReturn;
+	}
+	
+	private Topics findPlannedTopicBetween(BatchDetails batchDetails, Calendar startOfWeek, Calendar endOfWeek) {
+		Topics topicToReturn = null;
+		TopicStatus planned = topicStatusRepo.findByStatus("Planned");
+		
+		List<BatchProgress> batchProgressList = batchProgressRepo.findByBatchDetailsAndStatusOrderByPlannedStartDateDesc(batchDetails, planned);
+		for(BatchProgress batchProgress : batchProgressList) {
+			Calendar plannedDate = Calendar.getInstance();
+			plannedDate.setTime(batchProgress.getPlannedStartDate());
+			if((plannedDate.after(startOfWeek) || plannedDate.equals(startOfWeek)) && (plannedDate.before(endOfWeek) || plannedDate.equals(endOfWeek))) {
+				topicToReturn = batchProgress.getTopic(); 		//The first planned topic found is good enough. Break the loop
+				break;
+			}
+		}
+		return topicToReturn;
 	}
 
 	@Override
@@ -138,7 +207,7 @@ public class ProgressService implements IProgressService{
 	}
 
 	@Override
-	public BatchProgress manageCurrentBatchProgress(BatchDetails batchDetails, StudentFeedbackResponseTO inputData) throws TSHException {
+	public BatchProgress manageCurrentBatchProgress(BatchDetails batchDetails, StudentFeedbackRequestTO inputData) throws TSHException {
 		
 		// Get topic status COMPLETED.
 		TopicStatus completed = topicStatusRepo.findByStatus("Completed");
@@ -195,7 +264,7 @@ public class ProgressService implements IProgressService{
 	}
 
 	@Override
-	public BatchProgress manageNextBatchProgress(BatchDetails batchDetails, StudentFeedbackResponseTO inputData)
+	public BatchProgress manageNextBatchProgress(BatchDetails batchDetails, StudentFeedbackRequestTO inputData)
 			throws TSHException {
 		
 		logger.info("Evaluating need for new next batch progress");
@@ -242,7 +311,7 @@ public class ProgressService implements IProgressService{
 	}
 
 	@Override
-	public TopicProgress manageCurrentAndNextTopicProgress(BatchDetails batchDetails, StudentFeedbackResponseTO inputData) throws TSHException{
+	public TopicProgress manageCurrentAndNextTopicProgress(BatchDetails batchDetails, StudentFeedbackRequestTO inputData) throws TSHException{
 
 		Topics currentTopic = topicRepo.findById(inputData.getTodaysTopicId()).orElse(null);
 		Topics nextTopic = topicRepo.findById(inputData.getNextTopicId()).orElse(null);
@@ -255,7 +324,7 @@ public class ProgressService implements IProgressService{
 			throw new TSHException("Current topic : " + inputData.getTodaysTopicDesc() + " - not found in data store. Please check the selected topic");
 		}
 		
-		for(StudentResponseTO studentTO : inputData.getStudents()) {
+		for(StudentRequestTO studentTO : inputData.getStudents()) {
 			logger.info("Adding topic progress for {}", studentTO.getName());
 		
 			StudentBatches studentBatch = studentBatchRepo.findById(studentTO.getId()).orElse(null);
@@ -264,7 +333,7 @@ public class ProgressService implements IProgressService{
 				continue;
 			}
 			
-			
+			// Is there a topic already in progress for the current topic selected. If yes find that topic
 			TopicProgress topicProgress = topicProgressRepo.findByStudentAndCourseAndTopicAndStatusNot(studentBatch.getStudent(), batchDetails.getCourse(), currentTopic, completed);
 			if(topicProgress == null) {
 				topicProgress = new TopicProgress();
@@ -274,6 +343,9 @@ public class ProgressService implements IProgressService{
 			topicProgress.setCourse(batchDetails.getCourse());
 			topicProgress.setTopic(currentTopic);
 			if(topicProgress.getStartDate() == null) topicProgress.setStartDate(TshUtil.getCurrentDate());
+			
+			// If the next topic and current topic are same. It means the same topic is expected to continue next week so set the status as in progress 
+			// or else mark the current topic completed.
 			if(inputData.getTodaysTopicId() == inputData.getNextTopicId()) topicProgress.setStatus(inProgress); else {
 				topicProgress.setEndDate(TshUtil.getCurrentDate());
 				topicProgress.setStatus(completed);
@@ -298,6 +370,7 @@ public class ProgressService implements IProgressService{
 				nextTopicProgress = new TopicProgress();
 			}
 			
+			// For the next weeks topic. Only set the planned date. Do not set the start date as it is just planned for now.
 			nextTopicProgress.setStudent(studentBatch.getStudent());
 			nextTopicProgress.setCourse(batchDetails.getCourse());
 			nextTopicProgress.setTopic(nextTopic);

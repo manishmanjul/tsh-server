@@ -1,8 +1,8 @@
 package com.tsh.library.dto;
 
-public class StudentResponseTO {
+public class StudentRequestTO {
 	
-	public StudentResponseTO() {
+	public StudentRequestTO() {
 	}
 	
 	int id;				//This is not the studentID from the student table. It is Student_Batch_Id

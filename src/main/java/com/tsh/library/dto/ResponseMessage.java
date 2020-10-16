@@ -14,6 +14,7 @@ public class ResponseMessage {
 	public final static ResponseMessage UNABLE_TO_UPDATE_BATCH_PROGRESS = new ResponseMessage(302, "Unable to generate Batch Progress");
 	public final static ResponseMessage UNABLE_TO_UPDATE_TOPIC_PROGRESS = new ResponseMessage(303, "Unable to generate Topic Progress");
 	public final static ResponseMessage UNABLE_TO_UPDATE_STUDENT_FEEDBACK = new ResponseMessage(304, "Unable to update Student Feedback");
+	public final static ResponseMessage UNABLE_TO_FETCH_BATCH_DETAILS= new ResponseMessage(305, "Unable to fetch Batch Details");
 	public final static ResponseMessage STUDENT_FEEDBACK_UPDATED = new ResponseMessage(100, "Feedback Saved Successfully");
 	public final static String SUCCESS_STRING = "Success";
 	public final static String ERROR_STRING = "Error";

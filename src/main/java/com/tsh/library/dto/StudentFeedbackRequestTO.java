@@ -2,9 +2,9 @@ package com.tsh.library.dto;
 
 import java.util.ArrayList;
 
-public class StudentFeedbackResponseTO {
+public class StudentFeedbackRequestTO {
 	
-	public StudentFeedbackResponseTO() {	
+	public StudentFeedbackRequestTO() {	
 	}
 	
 	int todaysTopicId;
@@ -16,8 +16,8 @@ public class StudentFeedbackResponseTO {
 	String classDate;
 	boolean printBooklet;
 	int updatedById;
-	ArrayList<FeedbackResponseTO> feedbacks;
-	ArrayList<StudentResponseTO> students;
+	ArrayList<FeedbackRequestTO> feedbacks;
+	ArrayList<StudentRequestTO> students;
 	
 	public int getTodaysTopicId() {
 		return todaysTopicId;
@@ -73,16 +73,16 @@ public class StudentFeedbackResponseTO {
 	public void setUpdatedById(int updatedById) {
 		this.updatedById = updatedById;
 	}
-	public ArrayList<FeedbackResponseTO> getFeedbacks() {
+	public ArrayList<FeedbackRequestTO> getFeedbacks() {
 		return feedbacks;
 	}
-	public void setFeedbacks(ArrayList<FeedbackResponseTO> feedbacks) {
+	public void setFeedbacks(ArrayList<FeedbackRequestTO> feedbacks) {
 		this.feedbacks = feedbacks;
 	}
-	public ArrayList<StudentResponseTO> getStudents() {
+	public ArrayList<StudentRequestTO> getStudents() {
 		return students;
 	}
-	public void setStudents(ArrayList<StudentResponseTO> students) {
+	public void setStudents(ArrayList<StudentRequestTO> students) {
 		this.students = students;
 	}
 }

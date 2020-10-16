@@ -16,7 +16,7 @@ import com.tsh.entities.TopicProgress;
 import com.tsh.entities.TopicStatus;
 import com.tsh.entities.Topics;
 import com.tsh.exception.TSHException;
-import com.tsh.library.dto.StudentFeedbackResponseTO;
+import com.tsh.library.dto.StudentFeedbackRequestTO;
 
 @Service
 public interface IFeedbackService {
@@ -47,7 +47,7 @@ public interface IFeedbackService {
 	
 	Map<String, String> getDummyFeedbackMap();
 	
-	public void processStudentFeedback(BatchDetails batchDetails, StudentFeedbackResponseTO inputData) throws TSHException; 
+	public void processStudentFeedback(BatchDetails batchDetails, StudentFeedbackRequestTO inputData) throws TSHException; 
 	
 	public StudentFeedback saveFeedback(StudentFeedback feedback) throws TSHException;
 	

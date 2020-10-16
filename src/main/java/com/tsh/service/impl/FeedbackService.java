@@ -25,9 +25,9 @@ import com.tsh.entities.TopicStatus;
 import com.tsh.entities.Topics;
 import com.tsh.entities.Week;
 import com.tsh.exception.TSHException;
-import com.tsh.library.dto.FeedbackResponseTO;
-import com.tsh.library.dto.StudentFeedbackResponseTO;
-import com.tsh.library.dto.StudentResponseTO;
+import com.tsh.library.dto.FeedbackRequestTO;
+import com.tsh.library.dto.StudentFeedbackRequestTO;
+import com.tsh.library.dto.StudentRequestTO;
 import com.tsh.repositories.FeedbackCategoryRepository;
 import com.tsh.repositories.FeedbackRepository;
 import com.tsh.repositories.StudentFeedbackRepository;
@@ -158,7 +158,7 @@ public class FeedbackService implements IFeedbackService{
 	@Override
 	public Map<String, String> getDummyFeedbackMap() {
 		Map<String, String> feedbackMap = new HashMap<>();
-		feedbackMap.put("Revesion", "No feedback available");
+		feedbackMap.put("Revision", "No feedback available");
 		feedbackMap.put("Classwork", "No feedback available");
 		feedbackMap.put("Homework", "No feedback available");
 		feedbackMap.put("Assessment", "No feedback available");
@@ -172,7 +172,7 @@ public class FeedbackService implements IFeedbackService{
 	}
 
 	@Override
-	public void processStudentFeedback(BatchDetails batchDetails, StudentFeedbackResponseTO inputData) throws TSHException{
+	public void processStudentFeedback(BatchDetails batchDetails, StudentFeedbackRequestTO inputData) throws TSHException{
 		
 		logger.info("Initiating process feedback for requested students.");
 		logger.info("Validating Teacher details");
@@ -184,7 +184,7 @@ public class FeedbackService implements IFeedbackService{
 		
 		// There can be multiple students for same feedback. Update this feedback for all.
 		ArrayList<StudentFeedback> studentFeedbacks = new ArrayList<>();
-		for(StudentResponseTO student : inputData.getStudents()) {
+		for(StudentRequestTO student : inputData.getStudents()) {
 			logger.info("Updating feedback for : {}", student.getName());
 			
 			StudentBatches studBatch = studentService.getStudentBatchesById(student.getId());
@@ -201,7 +201,7 @@ public class FeedbackService implements IFeedbackService{
 			
 			logger.info("Aggregating all feedbacks for : {}",student.getName());
 			
-			for(FeedbackResponseTO feedbackTO : inputData.getFeedbacks()) {
+			for(FeedbackRequestTO feedbackTO : inputData.getFeedbacks()) {
 				Feedback feedback = this.getFeedbackById(feedbackTO.getFeedbackId());
 				if(feedback == null) {
 					logger.warn("Feedbck : {} - not found. SKipping this feedback", feedbackTO.getDescription());

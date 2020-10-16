@@ -6,9 +6,7 @@ import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -34,6 +32,8 @@ import com.tsh.entities.TopicProgress;
 import com.tsh.entities.TrainingType;
 import com.tsh.entities.Week;
 import com.tsh.exception.TSHException;
+import com.tsh.library.dto.FeedbackCategoryTO;
+import com.tsh.library.dto.FeedbackTO;
 import com.tsh.library.dto.ScheduleTO;
 import com.tsh.library.dto.StudentTO;
 import com.tsh.library.dto.TopicsTO;
@@ -212,33 +212,39 @@ public class BatchService implements IBatchService {
 		List<BatchDetails> batches = batchDetailRepo.findAllByTeacherAndActive(teacher, true);
 		
 		for(BatchDetails batch : batches) {
-			
-			ScheduleTO schedule = new ScheduleTO();
-			schedule.setKey(batch.getId() + "");
-			schedule.setCourseId(batch.getCourse().getId());
-			schedule.setCourse(batch.getCourse().getShortDescription());
-			schedule.setCourseDescription(batch.getCourse().getDescription());
-			schedule.setDay(DayOfWeek.of(batch.getBatch().getTimeSlot().getWeekday()).minus(1).toString());
-			schedule.setStartTime(batch.getBatch().getTimeSlot().getStartTime().toString());
-			schedule.setEndTime(batch.getBatch().getTimeSlot().getEndTime().toString());
-			schedule.setGrade(batch.getGrade().getGrade());
-			schedule.setTeacherName(batch.getTeacher().getTeacherName());
-			schedule.setTerm("3");
-			schedule.setAttendies(fetchAllStudentsData(batch));
-			schedule.setTopics(fetchAllTopicsForCourse(batch));
-			schedule.setCurrentTopic(getCurrentTopicOfBatch(batch));
-			schedule.setNextTopic(getNextTopicOfBatch(batch));
-			
-			schedules.add(schedule);
+			schedules.add(getBatchDetails(batch));
 		}
 		logger.info("{} batches fetched. Returning result",schedules.size());
 		return schedules;
 	}
 	
+	
+	@Override
+	public ScheduleTO getBatchDetails(BatchDetails batchDetails) throws TSHException, ParseException {
+		ScheduleTO schedule = new ScheduleTO();
+		schedule.setKey(batchDetails.getId() + "");
+		schedule.setCourseId(batchDetails.getCourse().getId());
+		schedule.setCourse(batchDetails.getCourse().getShortDescription());
+		schedule.setCourseDescription(batchDetails.getCourse().getDescription());
+		schedule.setDay(DayOfWeek.of(batchDetails.getBatch().getTimeSlot().getWeekday()).minus(1).toString());
+		schedule.setStartTime(batchDetails.getBatch().getTimeSlot().getStartTime().toString());
+		schedule.setEndTime(batchDetails.getBatch().getTimeSlot().getEndTime().toString());
+		schedule.setGrade(batchDetails.getGrade().getGrade());
+		schedule.setTeacherName(batchDetails.getTeacher().getTeacherName());
+		schedule.setTerm("4");
+		schedule.setAttendies(fetchAllStudentsData(batchDetails));
+		schedule.setTopics(fetchAllTopicsForCourse(batchDetails));
+		schedule.setCurrentTopic(getCurrentTopicOfBatch(batchDetails));
+		schedule.setNextTopic(getNextTopicOfBatch(batchDetails));
+		
+		return schedule;
+	}
+	
+	
 	private List<StudentTO> fetchAllStudentsData(BatchDetails batch) {
 		List<StudentBatches> students = studentService.getStudentBatches(batch);
 		List<StudentTO> studentList = new ArrayList<>();
-		Map<String, String> feedbackMap = new HashMap<>();
+
 		for(StudentBatches studentBatch : students) {
 			StudentTO studentTO = new StudentTO();
 			studentTO.setId(studentBatch.getId());
@@ -246,36 +252,38 @@ public class BatchService implements IBatchService {
 			studentTO.setGrade(studentBatch.getStudent().getGrade().getGrade()+"");
 			studentTO.setCourse(studentBatch.getCourse().getDescription());
 			
+			// Fetch the topic progress for last week based on startDate. This might return the the topic that might have been started last week but waS NOT COMPLETED.
+			// Meaning -- A topic that was kept in progress would also be returned. Which is the correct behavior.
 			TopicProgress topicProgress = progressService.getStudentLastTopicProgress(studentBatch.getStudent(), studentBatch.getCourse());			
 			if(topicProgress != null) {
 				studentTO.setPreviousTopic(topicProgress.getTopic().getDescription());
-//			else
-//				studentTO.setPreviousTopic("No previous Topic Found");
 			
 				List<StudentFeedback> feedbacks = feedbackService.getAllFeedbacks(studentBatch, topicProgress.getTopic());
+				ModelMapper mapper = new ModelMapper();
+			
+				Teacher feedbackProvider = null;
+				Calendar feedbackDate = Calendar.getInstance();
 				
-				for(StudentFeedback studFeedback : feedbacks) {
-					String key = studFeedback.getFeedback().getCategory().getDescription(); 
-					if(feedbackMap.containsKey(key)) {
-						if(studFeedback.getFeedback().getCategory().getCategory() == 3)
-							feedbackMap.replace(key, feedbackMap.get(key) + ", " + studFeedback.getFeedbackText());
-						else
-							feedbackMap.replace(key, feedbackMap.get(key) + ", " + studFeedback.getFeedback().getShortDescription());
-					}else {
-						if(studFeedback.getFeedback().getCategory().getCategory() == 3)
-							feedbackMap.put(key, studFeedback.getFeedbackText());
-						else 
-							feedbackMap.put(key, studFeedback.getFeedback().getShortDescription());
+				if(feedbacks.size() > 0) {	//Feedbacks are sorted in descending order. The first one is the latest one.
+					feedbackProvider = feedbacks.get(0).getTeacher();
+					feedbackDate.setTime(feedbacks.get(0).getFeedbackDate());
+				}
+
+				// There can be multiple feedbacks provided for a topic by different teacher or by same teacher. 
+				// Get only the latest feedbacks and provided by just one teacher.
+				for(StudentFeedback studFeedback : feedbacks) {		
+					Calendar fDate = Calendar.getInstance();
+					fDate.setTime(studFeedback.getFeedbackDate());
+					if(studFeedback.getTeacher().equals(feedbackProvider) && fDate.equals(feedbackDate)) {
+						FeedbackCategoryTO categoryTO = mapper.map(studFeedback.getFeedback().getCategory(), FeedbackCategoryTO.class);
+						categoryTO.setTeachersComment(studFeedback.getFeedbackText()); 			// For every feedback category the teachers comment is added to every student feedback record
+						categoryTO.setFeedbacks(null); 											//We don't want the entire list of Feedbacks for every category here.
+						FeedbackTO feedbackTO = mapper.map(studFeedback.getFeedback(), FeedbackTO.class);
+						studentTO.addFeedback(categoryTO, feedbackTO);
 					}
 				}
-			
-			if(feedbackMap.size() < 4)
-				feedbackMap.put("Assessment", "Not Assessed yet");
-			}else {
-				feedbackMap = feedbackService.getDummyFeedbackMap();
 			}
-				
-			studentTO.setFeedback(feedbackMap);
+			studentTO.addToSortedMap();
 			studentList.add(studentTO);
 		}
 		

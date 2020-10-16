@@ -91,6 +91,12 @@ public class TshUtil {
 		return nextWeek;
 	}
 	
+	/**
+	 * Returns the date of the next class based of the batch timeslot.
+	 * @param timeSlot
+	 * @return
+	 * @throws TSHException
+	 */
 	public static Date nextClass(TimeSlot timeSlot) throws TSHException {
 		DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
 		Date nextClassDate = null;
@@ -106,6 +112,14 @@ public class TshUtil {
 			throw new TSHException(e.getMessage());
 		}
 		return nextClassDate;
+	}
+	
+	/**
+	 * Returns todays week day. 
+	 */
+	public static int getTodaysWeekDay() {
+		Calendar today = Calendar.getInstance();
+		return today.get(Calendar.DAY_OF_WEEK);
 	}
 	
 	public static Date format(Date input) throws TSHException {

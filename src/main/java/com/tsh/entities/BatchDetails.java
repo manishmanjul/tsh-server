@@ -14,6 +14,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import com.tsh.utility.TshUtil;
+
 @Entity
 @Table(name="batch_details")
 public class BatchDetails extends BaseEntity{
@@ -232,5 +234,9 @@ public class BatchDetails extends BaseEntity{
 		batchDetails.setStartDate(Calendar.getInstance().getTime());
 		batchDetails.setBatchName(course.getShortDescription(), batch.getTimeSlot().getName());
 		return batchDetails;
+	}
+	
+	public boolean isCLassToday() {
+		return this.batch.getTimeSlot().getWeekday() == TshUtil.getTodaysWeekDay();
 	}
 }

@@ -2,43 +2,28 @@ package com.tsh.library.dto;
 
 public class FeedbackResponseTO {
 	
+	private ResponseMessage message;
+	private ScheduleTO schedule;
+	
+	public FeedbackResponseTO(ResponseMessage message) {
+		super();
+		this.message = message;
+	}
+	
 	public FeedbackResponseTO() {
+		super();
 	}
-	
-	int feedbackId;
-	String description;
-	int categoryId;
-	String categoryDescription;
-	String comment;
-	
-	public int getFeedbackId() {
-		return feedbackId;
+
+	public ResponseMessage getMessage() {
+		return message;
 	}
-	public void setFeedbackId(int feedbackId) {
-		this.feedbackId = feedbackId;
+	public void setMessage(ResponseMessage message) {
+		this.message = message;
 	}
-	public String getDescription() {
-		return description;
+	public ScheduleTO getSchedule() {
+		return schedule;
 	}
-	public void setDescription(String description) {
-		this.description = description;
-	}
-	public int getCategoryId() {
-		return categoryId;
-	}
-	public void setCategoryId(int categoryId) {
-		this.categoryId = categoryId;
-	}
-	public String getCategoryDescription() {
-		return categoryDescription;
-	}
-	public void setCategoryDescription(String categoryDescription) {
-		this.categoryDescription = categoryDescription;
-	}
-	public String getComment() {
-		return comment;
-	}
-	public void setComment(String comment) {
-		this.comment = comment;
+	public void setSchedule(ScheduleTO schedule) {
+		this.schedule = schedule;
 	}
 }

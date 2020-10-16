@@ -45,6 +45,8 @@ public interface IBatchService extends TshService{
 	
 	List<ScheduleTO> getSchedulesFor(Teacher teacher) throws ParseException, TSHException;
 	
+	ScheduleTO getBatchDetails(BatchDetails batchDetails) throws TSHException, ParseException;
+	
 	Week getWeekByWeekNumber(int weekNumber);
 	
 	Term getTerm(int termNumber);
