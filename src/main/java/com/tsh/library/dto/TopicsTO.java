@@ -1,6 +1,9 @@
 package com.tsh.library.dto;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import com.tsh.entities.Course;
 import com.tsh.entities.Grades;
@@ -20,8 +23,10 @@ public class TopicsTO {
 	private Week week;
 	private boolean active;
 	private String status;
-	private Date startDate;
-	private Date endDate;
+	private String startDate;
+	private String endDate;
+	private String plannedStartDate;
+	private String plannedEndDate;
 	
 	public int getId() {
 		return id;
@@ -89,17 +94,33 @@ public class TopicsTO {
 	public void setStatus(String status) {
 		this.status = status;
 	}
-	public Date getStartDate() {
+	public String getStartDate() {
 		return startDate;
 	}
 	public void setStartDate(Date startDate) {
-		this.startDate = startDate;
+		DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
+		this.startDate = formatter.format(startDate);
 	}
-	public Date getEndDate() {
+	public String getEndDate() {
 		return endDate;
 	}
 	public void setEndDate(Date endDate) {
-		this.endDate = endDate;
+		DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
+		this.endDate = formatter.format(endDate);
+	}
+	public String getPlannedStartDate() {
+		return plannedStartDate;
+	}
+	public void setPlannedStartDate(Date plannedStartDate) {
+		DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
+		this.plannedStartDate = formatter.format(plannedStartDate);
+	}
+	public String getPlannedEndDate() {
+		return plannedEndDate;
+	}
+	public void setPlannedEndDate(Date plannedEndDate) {
+		DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
+		this.plannedEndDate = formatter.format(plannedEndDate);
 	}	
 	
 }

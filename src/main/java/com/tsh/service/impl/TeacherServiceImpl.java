@@ -1,5 +1,10 @@
 package com.tsh.service.impl;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -9,11 +14,15 @@ import com.tsh.repositories.TeachersRepository;
 import com.tsh.service.ITeacherService;
 
 @Service
-public class TeacherServiceImpl implements ITeacherService{
+public class TeacherServiceImpl implements ITeacherService {
+
+	private List<Teacher> teachers;
+
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Autowired
 	private TeachersRepository teacherRepo;
-	
+
 	@Override
 	public Teacher findByName(String name) {
 		return teacherRepo.findByTeacherName(name);
@@ -32,5 +41,18 @@ public class TeacherServiceImpl implements ITeacherService{
 	@Override
 	public Teacher findById(int teacherId) {
 		return teacherRepo.findById(teacherId).orElse(null);
+	}
+
+	@Override
+	public List<Teacher> findAllTeachers() {
+		return teacherRepo.findAll();
+	}
+
+	public Optional<Teacher> getTeachers(String teacher) {
+		if (this.teachers == null || this.teachers.size() <= 0) {
+			logger.info("Retrieving all Teachers....");
+			this.teachers = this.findAllTeachers();
+		}
+		return teachers.stream().filter(t -> t.getTeacherName().equals(teacher)).findFirst();
 	}
 }

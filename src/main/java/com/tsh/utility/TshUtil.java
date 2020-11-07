@@ -68,7 +68,7 @@ public class TshUtil {
 	}
 	
 	public static Date getCurrentDate() throws TSHException {
-		DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
+		DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.ENGLISH);
 		Date today = Calendar.getInstance().getTime();
 		try {
 			today = formatter.parse(formatter.format(today));
@@ -112,6 +112,18 @@ public class TshUtil {
 			throw new TSHException(e.getMessage());
 		}
 		return nextClassDate;
+	}
+	
+	public static boolean isTodayInRange(Date start, Date end) {
+		Calendar today = Calendar.getInstance();
+				
+		Calendar startDate = Calendar.getInstance();
+		startDate.setTime(start);
+		
+		Calendar endDate = Calendar.getInstance();
+		endDate.setTime(end);
+		
+		return ((today.after(startDate) || today.equals(startDate)) && (today.before(endDate) || today.equals(endDate)));
 	}
 	
 	/**

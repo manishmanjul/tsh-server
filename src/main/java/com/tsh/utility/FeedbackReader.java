@@ -35,9 +35,10 @@ import com.tsh.entities.TopicProgress;
 import com.tsh.entities.TopicStatus;
 import com.tsh.entities.Topics;
 import com.tsh.exception.TSHException;
-import com.tsh.service.IBatchService;
 import com.tsh.service.IFeedbackService;
+import com.tsh.service.IGeneralService;
 import com.tsh.service.IStudentService;
+import com.tsh.service.ITopicService;
 
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
@@ -56,9 +57,11 @@ public class FeedbackReader {
 	@Autowired
 	private IStudentService studentService;
 	@Autowired
-	private IBatchService batchService;
-	@Autowired
 	private IFeedbackService feedbackService;
+	@Autowired
+	private ITopicService topicService;
+	@Autowired
+	private IGeneralService generalService;
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -118,79 +121,80 @@ public class FeedbackReader {
 					break;
 				}
 			}
-			logger.info("{} feedbacks read\n",feedbacks.size());
+			logger.info("{} feedbacks read\n", feedbacks.size());
 			reader.close();
 		}
 		feedbackService.saveAllStudentFeedbacks(feedbacks);
-		feedbackService.saveAllTopicProgress(progressList);
-		logger.info("Save {} feedbacks and {} topic Progress.",feedbacks.size(), progressList.size());
+		topicService.saveAllTopicProgress(progressList);
+		logger.info("Save {} feedbacks and {} topic Progress.", feedbacks.size(), progressList.size());
 		return "Saved " + feedbacks.size() + " feedbacks and " + progressList.size() + " topic Progress.";
 	}
 
-	private List<StudentFeedback> extractFeedback(String line, StudentBatches batches) throws ParseException, TSHException {
+	private List<StudentFeedback> extractFeedback(String line, StudentBatches batches)
+			throws ParseException, TSHException {
 		List<StudentFeedback> feedbacks = new ArrayList<>();
 		SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy h:mm:ss a");
-		
-		StringTokenizer token = new StringTokenizer(line,"||");
+
+		StringTokenizer token = new StringTokenizer(line, "||");
 		Date feedbackDate = formatter.parse(token.nextToken().trim());
-		
+
 		String feedbackStr = token.nextToken();
 		feedbackStr = feedbackStr.replaceAll("::", "||");
 		feedbackStr = feedbackStr.replaceAll(":", "||");
 		feedbackStr = feedbackStr.replaceAll("-", "||");
-		
+
 		StringTokenizer token2 = new StringTokenizer(feedbackStr, "||");
 		String mappedIdStr = token2.nextToken().trim();
-		Topics topic = feedbackService.getTopicByMappedId(mappedIdStr);
-		
+		Topics topic = topicService.getTopicByMappedId(mappedIdStr);
+
 		String perfHeader = "";
-		while(!perfHeader.equalsIgnoreCase("Performance")) {
-			perfHeader = token2.nextToken().trim(); 
+		while (!perfHeader.equalsIgnoreCase("Performance")) {
+			perfHeader = token2.nextToken().trim();
 		}
-		
+
 		// Handle Category 1 feedback
 		String perfStr = token2.nextToken();
-		token = new StringTokenizer(perfStr,",");
-		while(token.hasMoreTokens()) {
+		token = new StringTokenizer(perfStr, ",");
+		while (token.hasMoreTokens()) {
 			StudentFeedback studFeedback = new StudentFeedback();
 			studFeedback.setFeedbackDate(feedbackDate);
 			studFeedback.setStudentBatches(batches);
 			studFeedback.setTeacher(batches.getBatchDetails().getTeacher());
 			studFeedback.setTopic(topic);
 			String cat1Feedback = token.nextToken().trim();
-			if(cat1Feedback.length() > 0) {
+			if (cat1Feedback.length() > 0) {
 				Feedback feedback = feedbackService.getFeedbackByShortDescription(cat1Feedback);
 				studFeedback.setFeedback(feedback);
 				feedbacks.add(studFeedback);
 			}
 		}
-		
-		//Handle category 2 feedback
-		token2.nextToken(); //Don't need the COncenrs with text
+
+		// Handle category 2 feedback
+		token2.nextToken(); // Don't need the COncenrs with text
 		String generalStr = token2.nextToken().trim();
-		token = new StringTokenizer(generalStr,",");
-		while(token.hasMoreTokens()) {
+		token = new StringTokenizer(generalStr, ",");
+		while (token.hasMoreTokens()) {
 			StudentFeedback studentFeedback = new StudentFeedback();
 			studentFeedback.setFeedbackDate(feedbackDate);
 			studentFeedback.setStudentBatches(batches);
 			studentFeedback.setTeacher(batches.getBatchDetails().getTeacher());
 			studentFeedback.setTopic(topic);
 			String cat2Feedback = token.nextToken().trim();
-			if(cat2Feedback.length() > 0) {
+			if (cat2Feedback.length() > 0) {
 				Feedback feedback = feedbackService.getFeedbackByShortDescription(cat2Feedback);
 				studentFeedback.setFeedback(feedback);
 				feedbacks.add(studentFeedback);
 			}
 		}
-		
+
 		// Handle category 3 feedback
 		String cat3Str = token2.nextToken().trim();
 		String feedbackText = null;
-		if(token2.hasMoreTokens())
+		if (token2.hasMoreTokens())
 			feedbackText = token2.nextToken().trim();
 		else
 			feedbackText = "";
-		if(feedbackText.length() > 0) {
+		if (feedbackText.length() > 0) {
 			StudentFeedback studentFeedback = new StudentFeedback();
 			studentFeedback.setFeedbackDate(feedbackDate);
 			studentFeedback.setStudentBatches(batches);
@@ -201,7 +205,7 @@ public class FeedbackReader {
 			studentFeedback.setFeedbackText(feedbackText);
 			feedbacks.add(studentFeedback);
 		}
-		
+
 		return feedbacks;
 	}
 
@@ -213,7 +217,7 @@ public class FeedbackReader {
 			StringTokenizer token = new StringTokenizer(mainToken.nextToken(), ",");
 			Topics topic = new Topics();
 			topic.setMappedId(token.nextToken());
-			topic = feedbackService.getTopicByMappedId(topic.getMappedId());
+			topic = topicService.getTopicByMappedId(topic.getMappedId());
 			TopicProgress topicProgress = new TopicProgress();
 			topicProgress.setTopic(topic);
 			try {
@@ -230,11 +234,11 @@ public class FeedbackReader {
 			}
 
 			if (topicProgress.getStartDate() != null && topicProgress.getEndDate() != null)
-				topicProgress.setStatus(feedbackService.getTopicStatusByStatus(TopicStatus.COMPLETED));
+				topicProgress.setStatus(topicService.getTopicStatusByStatus(TopicStatus.COMPLETED));
 			if (topicProgress.getStartDate() != null && topicProgress.getEndDate() == null)
-				topicProgress.setStatus(feedbackService.getTopicStatusByStatus(TopicStatus.IN_PROGRESS));
+				topicProgress.setStatus(topicService.getTopicStatusByStatus(TopicStatus.IN_PROGRESS));
 			if (topicProgress.getStartDate() != null && topicProgress.getEndDate() != null)
-				topicProgress.setStatus(feedbackService.getTopicStatusByStatus(TopicStatus.COMPLETED));
+				topicProgress.setStatus(topicService.getTopicStatusByStatus(TopicStatus.COMPLETED));
 
 			topicProgress.setStudent(student);
 			topicProgress.setCourse(course);
@@ -266,10 +270,10 @@ public class FeedbackReader {
 			stud.setGrade(grade);
 		}
 
-		stud.setGrade(batchService.getGrades(stud.getGrade().getGrade())
+		stud.setGrade(generalService.getGrades(stud.getGrade().getGrade())
 				.orElseThrow(() -> new TSHException("Grade not found")));
 		stud = studentService.getStudentByNameAndGrade(stud.getStudentName(), stud.getGrade());
-		course = batchService.getCourses(course.getShortDescription())
+		course = generalService.getCourses(course.getShortDescription())
 				.orElseThrow(() -> new TSHException("Course not found"));
 		Map<String, BaseEntity> returnVal = new HashMap<>();
 		returnVal.put("student", stud);
