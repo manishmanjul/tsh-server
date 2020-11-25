@@ -1,15 +1,14 @@
 package com.tsh.entities;
 
 import java.text.DateFormat;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -20,26 +19,27 @@ import javax.persistence.Table;
 import com.tsh.exception.TSHException;
 
 @Entity
-@Table(name="batch")
-public class Batch extends BaseEntity{
+@Table(name = "batch")
+public class Batch extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="timeslot_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "timeslot_id")
 	private TimeSlot timeSlot;
-	
-	@Column(name="batch_startdate")
+
+	@Column(name = "batch_startdate")
 	private Date startDate;
-	
-	@Column(name="batch_enddate")
+
+	@Column(name = "batch_enddate")
 	private Date endDate;
-	
+
 	private int strength;
-	
-	public Batch() {}
+
+	public Batch() {
+	}
 
 	public int getId() {
 		return id;
@@ -123,7 +123,7 @@ public class Batch extends BaseEntity{
 			return false;
 		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "Batch [id=" + id + ", timeSlot=" + timeSlot + "]";
@@ -134,7 +134,7 @@ public class Batch extends BaseEntity{
 		Batch batch = new Batch();
 		batch.setTimeSlot(timeSlot);
 		batch.setStrength(4);
-		
+
 		try {
 			batch.setStartDate(formatter.parse(formatter.format(Calendar.getInstance().getTime())));
 		} catch (ParseException e) {

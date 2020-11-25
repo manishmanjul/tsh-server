@@ -10,8 +10,11 @@ import com.tsh.entities.Grades;
 import com.tsh.entities.Topics;
 
 @Repository
-public interface TopicsRepository extends JpaRepository<Topics, Integer>{
-	
+public interface TopicsRepository extends JpaRepository<Topics, Integer> {
+
 	public List<Topics> findByMappedId(String mappedId);
+
 	public List<Topics> findAllByCourseAndGradeAndActive(Course course, Grades grade, boolean active);
+
+	public List<Topics> findAllByActiveOrderByGradeId(boolean active);
 }

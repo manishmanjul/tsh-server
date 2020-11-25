@@ -13,11 +13,15 @@ import com.tsh.entities.TopicStatus;
 import com.tsh.entities.Topics;
 import com.tsh.exception.TSHException;
 import com.tsh.library.dto.TopicGenerationRequest;
+import com.tsh.library.dto.TopicRequest;
+import com.tsh.library.dto.TopicResponse;
 
 @Service
 public interface ITopicService extends TshService {
 
 	public int generateNewTopics(TopicGenerationRequest request) throws TSHException;
+
+	public Topics updateTopic(TopicRequest topicRequest) throws TSHException;
 
 	public Topics getTopicById(int topicId);
 
@@ -34,5 +38,9 @@ public interface ITopicService extends TshService {
 	public Topics getCurrentTopic(BatchDetails batchDetails) throws ParseException, TSHException;
 
 	public Topics getNextTopic(BatchDetails batchDetails) throws ParseException, TSHException;
+
+	public List<Topics> getAllActiveTopics();
+
+	public List<TopicResponse> getAllActiveTopicsAsTO();
 
 }

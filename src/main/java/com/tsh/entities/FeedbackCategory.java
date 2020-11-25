@@ -2,7 +2,9 @@ package com.tsh.entities;
 
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -10,21 +12,21 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="feedback_category")
-public class FeedbackCategory extends BaseEntity{
+@Table(name = "feedback_category")
+public class FeedbackCategory extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
+
 	private int category;
 	private String description;
 	private boolean active;
 	private int order;
-	
-	@OneToMany(mappedBy = "category")
+
+	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	private List<Feedback> feedbacks;
-	
+
 	public boolean isActive() {
 		return active;
 	}
@@ -33,7 +35,8 @@ public class FeedbackCategory extends BaseEntity{
 		this.active = active;
 	}
 
-	public FeedbackCategory() {}
+	public FeedbackCategory() {
+	}
 
 	public int getId() {
 		return id;
@@ -73,6 +76,6 @@ public class FeedbackCategory extends BaseEntity{
 
 	public void setOrder(int order) {
 		this.order = order;
-	}	
-	
+	}
+
 }

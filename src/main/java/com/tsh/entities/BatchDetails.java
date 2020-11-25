@@ -1,12 +1,11 @@
 package com.tsh.entities;
 
 import java.util.Calendar;
-
 import java.util.Date;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -17,51 +16,51 @@ import javax.persistence.Table;
 import com.tsh.utility.TshUtil;
 
 @Entity
-@Table(name="batch_details")
-public class BatchDetails extends BaseEntity{
+@Table(name = "batch_details")
+public class BatchDetails extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
-	@ManyToOne(cascade = CascadeType.PERSIST)
-	@JoinColumn(name="batch_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "batch_id")
 	private Batch batch;
-	
-	@Column(name="batch_name")
+
+	@Column(name = "batch_name")
 	private String batchName;
-	
-	@Column(name="start_date")
+
+	@Column(name = "start_date")
 	private Date startDate;
-	
-	@Column(name="end_date")
+
+	@Column(name = "end_date")
 	private Date endDate;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="teacher_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "teacher_id")
 	private Teacher teacher;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="course_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "course_id")
 	private Course course;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="grade_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "grade_id")
 	private Grades grade;
 
 	private int performance;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="training_type_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "training_type_id")
 	private TrainingType trainingType;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="term_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "term_id")
 	private Term term;
-	
-	@Column(name="active")
+
+	@Column(name = "active")
 	private boolean active;
-	
+
 	public boolean isActive() {
 		return active;
 	}
@@ -69,9 +68,10 @@ public class BatchDetails extends BaseEntity{
 	public void setActive(boolean active) {
 		this.active = active;
 	}
-	
-	private BatchDetails() {}
-	
+
+	private BatchDetails() {
+	}
+
 	public BatchDetails(Batch batch, Teacher teacher, Course course, Grades grade) {
 		this();
 		this.batch = batch;
@@ -107,7 +107,7 @@ public class BatchDetails extends BaseEntity{
 	public Date getStartDate() {
 		return startDate;
 	}
-	
+
 	public Date getEndDate() {
 		return endDate;
 	}
@@ -219,7 +219,7 @@ public class BatchDetails extends BaseEntity{
 			return false;
 		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "BatchDetails [id=" + id + ", batch=" + batch + ", batchName=" + batchName + ", startDate=" + startDate
@@ -229,13 +229,13 @@ public class BatchDetails extends BaseEntity{
 
 	public static BatchDetails getNewInstance(Batch batch, Teacher teacher, Course course, Grades grade) {
 		BatchDetails batchDetails = new BatchDetails(batch, teacher, course, grade);
-		
+
 		batchDetails.setActive(true);
 		batchDetails.setStartDate(Calendar.getInstance().getTime());
 		batchDetails.setBatchName(course.getShortDescription(), batch.getTimeSlot().getName());
 		return batchDetails;
 	}
-	
+
 	public boolean isCLassToday() {
 		return this.batch.getTimeSlot().getWeekday() == TshUtil.getTodaysWeekDay();
 	}

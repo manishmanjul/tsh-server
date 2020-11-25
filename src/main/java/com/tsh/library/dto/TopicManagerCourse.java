@@ -6,31 +6,48 @@ import java.util.List;
 public class TopicManagerCourse {
 
 	private String name;
+	private String shortDesc;
 	private List<TopicManagerSubject> subjects;
-	
-	public TopicManagerCourse(String name) {
+
+	public TopicManagerCourse(String name, String shortDesc) {
 		super();
 		this.name = name;
+		this.shortDesc = shortDesc;
 	}
+
 	public TopicManagerCourse() {
 	}
+
 	public String getName() {
 		return name;
 	}
+
 	public void setName(String name) {
 		this.name = name;
 	}
+
 	public List<TopicManagerSubject> getSubjects() {
 		return subjects;
 	}
+
 	public void setSubjects(List<TopicManagerSubject> subjects) {
 		this.subjects = subjects;
 	}
-	
+
 	public void addSubject(TopicManagerSubject sub) {
-		if(subjects == null) subjects = new ArrayList<>();
+		if (subjects == null)
+			subjects = new ArrayList<>();
 		subjects.add(sub);
 	}
+
+	public String getShortDesc() {
+		return shortDesc;
+	}
+
+	public void setShortDesc(String shortDesc) {
+		this.shortDesc = shortDesc;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -38,6 +55,7 @@ public class TopicManagerCourse {
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		return result;
 	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -54,6 +72,7 @@ public class TopicManagerCourse {
 			return false;
 		return true;
 	}
+
 	@Override
 	public String toString() {
 		return "TopicManagerCourse [name=" + name + "]";

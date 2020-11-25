@@ -8,17 +8,17 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="week")
-public class Week extends BaseEntity{
+@Table(name = "week")
+public class Week extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
-	@Column(name="week_number")
+
+	@Column(name = "week_number")
 	private int weekNumber;
-	
-	@Column(name="description")
+
+	@Column(name = "description")
 	private String description;
 
 	public int getId() {
@@ -45,7 +45,7 @@ public class Week extends BaseEntity{
 		this.description = description;
 	}
 
-	private Week() {
+	public Week() {
 		super();
 	}
 
@@ -54,7 +54,7 @@ public class Week extends BaseEntity{
 		this.weekNumber = week;
 		this.description = "Week " + week;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "Week [description=" + description + "]";

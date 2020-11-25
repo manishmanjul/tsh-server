@@ -2,9 +2,9 @@ package com.tsh.entities;
 
 import java.util.Date;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -13,43 +13,42 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="batch_progress")
+@Table(name = "batch_progress")
 public class BatchProgress {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="batch_detail_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "batch_detail_id")
 	private BatchDetails batchDetails;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="topic_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "topic_id")
 	private Topics topic;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="course_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "course_id")
 	private Course course;
-	
-	@Column(name="startdate")
+
+	@Column(name = "startdate")
 	private Date startDate;
-	
-	
-	@Column(name="enddate")
+
+	@Column(name = "enddate")
 	private Date endDate;
-	
-	@Column(name="planned_startdate")
+
+	@Column(name = "planned_startdate")
 	private Date plannedStartDate;
-	
-	@Column(name="planned_enddate")
+
+	@Column(name = "planned_enddate")
 	private Date plannedEndDate;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="status")
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "status")
 	private TopicStatus status;
-	
-	@Column(name="print_booklet")
+
+	@Column(name = "print_booklet")
 	private boolean printBooklet;
 
 	public int getId() {
@@ -143,11 +142,11 @@ public class BatchProgress {
 	public void printBooklet() {
 		this.printBooklet = true;
 	}
-	
+
 	public void dontPrintBooklet() {
 		this.printBooklet = false;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;

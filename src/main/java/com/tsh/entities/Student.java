@@ -6,9 +6,9 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -19,41 +19,41 @@ import javax.persistence.Table;
 import com.tsh.exception.TSHException;
 
 @Entity
-@Table(name="student")
-public class Student extends BaseEntity{
+@Table(name = "student")
+public class Student extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
-	@Column(name="student_name")
+
+	@Column(name = "student_name")
 	private String studentName;
-	
-	@OneToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="grade_id")
+
+	@OneToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "grade_id")
 	private Grades grade;
-	
-	@Column(name= "joining_date")
+
+	@Column(name = "joining_date")
 	private Date joiningDate;
-	
+
 	private String email;
-	
-	@Column(name="father_name")
+
+	@Column(name = "father_name")
 	private String fatherName;
-	
-	@Column(name="mother_name")
+
+	@Column(name = "mother_name")
 	private String motherName;
-	
+
 	private String phone;
-	
+
 	private boolean active;
-	
+
 	public Student() throws ParseException {
 		DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
 		this.joiningDate = formatter.parse(formatter.format(Calendar.getInstance().getTime()));
 
 	}
-	
+
 	public Student(String name, Grades grade) throws ParseException {
 		this();
 		this.studentName = name;
@@ -189,13 +189,14 @@ public class Student extends BaseEntity{
 		return "Student [studentName=" + studentName + ", grade=" + grade + ", joiningDate=" + joiningDate + ", email="
 				+ email + ", fatherName=" + fatherName + ", motherName=" + motherName + ", phone=" + phone + "]";
 	}
-	
+
 	public static Student getNewInstance(ImportItem item, Grades grade) throws TSHException {
 		Student student;
 		try {
 			student = new Student(item.getName(), grade);
 		} catch (ParseException e) {
-			throw new TSHException("Unable to set Joining Date of Student : " + item.getName() + "Possible cause : Error in formatting the date");
+			throw new TSHException("Unable to set Joining Date of Student : " + item.getName()
+					+ "Possible cause : Error in formatting the date");
 		}
 		student.setActive(true);
 		return student;

@@ -61,7 +61,7 @@ public interface IGeneralService {
 	/********************************
 	 * TimeSlot related Service *
 	 ********************************/
-	Optional<TimeSlot> getTimeSlot(int batchWeekDay, Time batchStartTime);
+	Optional<TimeSlot> getTimeSlot(int batchWeekDay, Time batchStartTime, Time batchEndTime);
 
 	/********************************
 	 * TrainingType related Service *

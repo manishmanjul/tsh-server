@@ -8,25 +8,26 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="course")
-public class Course extends BaseEntity{
+@Table(name = "course")
+public class Course extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
+
 	private String description;
-	
-	@Column(name="short_description")
+
+	@Column(name = "short_description")
 	private String shortDescription;
-	
-	private Course() {}
+
+	public Course() {
+	}
 
 	public Course(String course) {
 		this();
 		this.shortDescription = course.trim();
 	}
-	
+
 	public int getId() {
 		return id;
 	}

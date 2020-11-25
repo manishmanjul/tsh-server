@@ -3,9 +3,9 @@ package com.tsh.entities;
 import java.util.Calendar;
 import java.util.Date;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -14,34 +14,35 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="student_batches")
-public class StudentBatches extends BaseEntity{
+@Table(name = "student_batches")
+public class StudentBatches extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
-	@ManyToOne(cascade = CascadeType.PERSIST)
-	@JoinColumn(name="student_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "student_id")
 	private Student student;
-	
-	@ManyToOne(cascade = CascadeType.PERSIST)
-	@JoinColumn(name="batch_details_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "batch_details_id")
 	private BatchDetails batchDetails;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="course_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "course_id")
 	private Course course;
-	
+
 	@Column(name = "start_date")
 	private Date startDate;
-	
-	@Column(name="end_date")
-	private Date endDate;
-	
-	public StudentBatches() {}
 
-	public int getId() {  
+	@Column(name = "end_date")
+	private Date endDate;
+
+	public StudentBatches() {
+	}
+
+	public int getId() {
 		return id;
 	}
 
@@ -72,7 +73,7 @@ public class StudentBatches extends BaseEntity{
 	public void setCourse(Course course) {
 		this.course = course;
 	}
-	
+
 	public Date getStartDate() {
 		return startDate;
 	}

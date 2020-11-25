@@ -1,63 +1,63 @@
 package com.tsh.entities;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="topics")
-public class Topics extends BaseEntity{
+@Table(name = "topics")
+public class Topics extends BaseEntity {
 
 	public final static double DEFAULT_ESTIMATED_HOURS = 1.5;
 	public final static int DEFAULT_COMPLEXITY = 3;
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
-	@Column(name="chapter")
+
+	@Column(name = "chapter")
 	private String chapter;
-	
-	@Column(name="description")
+
+	@Column(name = "description")
 	private String description;
-	 
-	@Column(name="complexity")
+
+	@Column(name = "complexity")
 	private int complexity;
-	
-	@Column(name="estimated_hours")
+
+	@Column(name = "estimated_hours")
 	private double hoursToComplete;
-	
+
 	@Column(name = "topic_name")
 	private String topicName;
-	
-	@Column(name="mapped_id")
+
+	@Column(name = "mapped_id")
 	private String mappedId;
-	
-	@OneToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="term_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "term_id")
 	private Term term;
-	
-	@OneToOne(cascade = CascadeType.REFRESH)
+
+	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "grade_id")
 	private Grades grade;
-	
-	@OneToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="course_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "course_id")
 	private Course course;
-	
-	@OneToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="week_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "week_id")
 	private Week week;
-	
-	@Column(name="active")
+
+	@Column(name = "active")
 	private boolean active;
-	
+
 	public Topics() {
 		setDefaultEstimatedHours();
 		setDefaultComplexity();
@@ -155,11 +155,11 @@ public class Topics extends BaseEntity{
 	public void setDefaultEstimatedHours() {
 		this.hoursToComplete = Topics.DEFAULT_ESTIMATED_HOURS;
 	}
-	
+
 	public void setDefaultComplexity() {
 		this.complexity = Topics.DEFAULT_COMPLEXITY;
 	}
-	
+
 	public boolean isActive() {
 		return active;
 	}
@@ -252,5 +252,5 @@ public class Topics extends BaseEntity{
 			return false;
 		return true;
 	}
-	
+
 }

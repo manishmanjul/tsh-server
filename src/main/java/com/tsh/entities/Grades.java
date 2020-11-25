@@ -7,22 +7,23 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="grades")
-public class Grades extends BaseEntity{
+@Table(name = "grades")
+public class Grades extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
+
 	private int grade;
-	
-	private Grades() {}
+
+	public Grades() {
+	}
 
 	public Grades(int grade) {
 		this();
 		this.grade = grade;
 	}
-	
+
 	public int getId() {
 		return id;
 	}

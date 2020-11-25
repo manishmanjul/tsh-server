@@ -13,18 +13,20 @@ import com.tsh.entities.Student;
 import com.tsh.entities.StudentBatches;
 
 @Service
-public interface IStudentService extends TshService{
+public interface IStudentService extends TshService {
 
 	Optional<Student> getStudent(ImportItem item);
 
 	Optional<StudentBatches> getStudentBatches(Student student, Course course);
-	
+
 	List<StudentBatches> getStudentBatches(BatchDetails batch);
 
 	Student getStudentByNameAndGrade(String name, Grades grade);
-	
+
 	public StudentBatches getStudentBatchesById(int studentBatchId);
-	
+
 	int save(StudentBatches newStudentBatch);
+
+	Student saveStudent(Student student);
 
 }

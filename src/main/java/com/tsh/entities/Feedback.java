@@ -1,8 +1,8 @@
 package com.tsh.entities;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -11,26 +11,27 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="feedback")
-public class Feedback extends BaseEntity{
+@Table(name = "feedback")
+public class Feedback extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
+
 	private String description;
-	
-	@Column(name="short_description")
+
+	@Column(name = "short_description")
 	private String shortDescription;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="category_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "category_id")
 	private FeedbackCategory category;
-	
+
 	private String criteria;
 	private boolean active;
-	
-	public Feedback() {}
+
+	public Feedback() {
+	}
 
 	public int getId() {
 		return id;

@@ -2,9 +2,9 @@ package com.tsh.entities;
 
 import java.util.Date;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -13,42 +13,43 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="topic_progress")
-public class TopicProgress extends BaseEntity{
+@Table(name = "topic_progress")
+public class TopicProgress extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="student_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "student_id")
 	private Student student;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="course_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "course_id")
 	private Course course;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="topic_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "topic_id")
 	private Topics topic;
-	
-	@Column(name="startdate")
+
+	@Column(name = "startdate")
 	private Date startDate;
-	
-	@Column(name="enddate")
+
+	@Column(name = "enddate")
 	private Date endDate;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="status")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "status")
 	private TopicStatus status;
-	
-	@Column(name="planned_startdate")
+
+	@Column(name = "planned_startdate")
 	private Date plannedStartDate;
-	
-	@Column(name="planned_enddate")
+
+	@Column(name = "planned_enddate")
 	private Date plannedEndDate;
-	
-	public TopicProgress() {}
+
+	public TopicProgress() {
+	}
 
 	public int getId() {
 		return id;

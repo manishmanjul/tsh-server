@@ -24,6 +24,10 @@ public interface IBatchService extends TshService {
 
 	void saveBatchDetails(List<BatchDetails> batchDetails);
 
+	Batch saveBatch(Batch batch);
+
+	BatchDetails saveBatchDetails(BatchDetails batchDetails);
+
 	Optional<BatchDetails> getBatchDetails(Teacher teacher, Grades grade, Course course, TimeSlot timeSlot,
 			TrainingType trainingType, Term term);
 

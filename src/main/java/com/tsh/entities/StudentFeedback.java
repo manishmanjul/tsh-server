@@ -2,9 +2,9 @@ package com.tsh.entities;
 
 import java.util.Date;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -13,36 +13,37 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="student_feedback")
-public class StudentFeedback extends BaseEntity{
+@Table(name = "student_feedback")
+public class StudentFeedback extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="student_batches_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "student_batches_id")
 	private StudentBatches studentBatches;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="feedback_id")
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "feedback_id")
 	private Feedback feedback;
-	
-	@Column(name= "feedback_text")
+
+	@Column(name = "feedback_text")
 	private String feedbackText;
-	
-	@Column(name="feedback_date")
+
+	@Column(name = "feedback_date")
 	private Date feedbackDate;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
+
+	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "teacher_id")
 	private Teacher teacher;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
+
+	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "topic_id")
 	private Topics topic;
-	
-	public StudentFeedback() {}
+
+	public StudentFeedback() {
+	}
 
 	public int getId() {
 		return id;

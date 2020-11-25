@@ -1,7 +1,7 @@
 package com.tsh.entities;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -10,26 +10,27 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="teacher_details")
-public class TeacherDetails extends BaseEntity{
+@Table(name = "teacher_details")
+public class TeacherDetails extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="teacher_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "teacher_id")
 	private Teacher teacher;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="grade_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "grade_id")
 	private Grades grade;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="course_id")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "course_id")
 	private Course course;
 
-	public TeacherDetails() {}
+	public TeacherDetails() {
+	}
 
 	public int getId() {
 		return id;
@@ -61,5 +62,5 @@ public class TeacherDetails extends BaseEntity{
 
 	public void setCourse(Course course) {
 		this.course = course;
-	}	
+	}
 }

@@ -6,19 +6,19 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-@Entity 
+@Entity
 @Table(name = "training_type")
-public class TrainingType extends BaseEntity{
+public class TrainingType extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
+
 	private String type;
 
 	private String description;
-	
-	private TrainingType() {
+
+	public TrainingType() {
 	}
 
 	public int getId() {

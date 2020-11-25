@@ -4,7 +4,9 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,8 @@ import com.tsh.library.dto.CourseGenTO;
 import com.tsh.library.dto.GradeTO;
 import com.tsh.library.dto.TermTO;
 import com.tsh.library.dto.TopicGenerationRequest;
+import com.tsh.library.dto.TopicRequest;
+import com.tsh.library.dto.TopicResponse;
 import com.tsh.repositories.TopicProgressRepository;
 import com.tsh.repositories.TopicStatusRepository;
 import com.tsh.repositories.TopicsRepository;
@@ -257,5 +261,64 @@ public class TopicService implements ITopicService {
 
 		topicsRepo.saveAll(topicList);
 		return topicList.size();
+	}
+
+	@Override
+	public List<Topics> getAllActiveTopics() {
+		return topicsRepo.findAllByActiveOrderByGradeId(true);
+	}
+
+	@Override
+	public List<TopicResponse> getAllActiveTopicsAsTO() {
+
+		ModelMapper mapper = new ModelMapper();
+		List<Topics> topicList = this.getAllActiveTopics();
+		List<TopicResponse> topicTOList = null;
+
+		topicTOList = topicList.stream().map(t -> {
+			TopicResponse topicTO = mapper.map(t, TopicResponse.class);
+			topicTO.setGrade(t.getGrade().getGrade() + "");
+			topicTO.setTerm(t.getTerm().getTerm() + "");
+			topicTO.setCourse(t.getCourse().getShortDescription());
+			topicTO.setWeek(t.getWeek().getWeekNumber() + "");
+			topicTO.setActive(1);
+			return topicTO;
+		}).collect(Collectors.toList());
+
+		return topicTOList;
+	}
+
+	@Override
+	public Topics updateTopic(TopicRequest topicRequest) throws TSHException {
+		Topics topic = topicsRepo.findById(topicRequest.getId())
+				.orElseThrow(() -> (new TSHException("No Topic Found")));
+		topic.setActive(topicRequest.getActive() == 1 ? true : false);
+		topic.setChapter(topicRequest.getChapter());
+		topic.setComplexity(topicRequest.getComplexity());
+		topic.setDescription(topicRequest.getDescription());
+		topic.setTopicName(topicRequest.getTopicName());
+		if (!topic.getCourse().getShortDescription().equalsIgnoreCase(topicRequest.getCourse())) {
+			Course course = generalService.getCourses(topicRequest.getCourse())
+					.orElseThrow(() -> new TSHException("No Course Found"));
+			topic.setCourse(course);
+		}
+
+		if (topic.getGrade().getGrade() != Integer.parseInt(topicRequest.getGrade())) {
+			Grades grade = generalService.getGrades(Integer.parseInt(topicRequest.getGrade()))
+					.orElseThrow(() -> new TSHException("No HGrade found"));
+			topic.setGrade(grade);
+		}
+
+		if (topic.getTerm().getTerm() != Integer.parseInt(topicRequest.getTerm())) {
+			Term term = generalService.getTerm(Integer.parseInt(topicRequest.getTerm()));
+			topic.setTerm(term);
+		}
+
+		if (topic.getWeek().getWeekNumber() != Integer.parseInt(topicRequest.getWeek())) {
+			Week week = generalService.getWeekByWeekNumber(Integer.parseInt(topicRequest.getWeek()));
+			topic.setWeek(week);
+		}
+
+		return topicsRepo.save(topic);
 	}
 }

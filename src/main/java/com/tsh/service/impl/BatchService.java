@@ -74,7 +74,7 @@ public class BatchService implements IBatchService {
 		return batchDetails.stream()
 				.filter(bd -> bd.getTeacher().equals(teacher) && bd.getGrade().equals(grade)
 						&& bd.getCourse().equals(course) && bd.getBatch().getTimeSlot().equals(timeslot)
-						&& bd.getTrainingType().equals(trainingType) && bd.getTerm().equals(term))
+						&& bd.getTerm().equals(term))
 				.findFirst();
 	}
 
@@ -90,8 +90,9 @@ public class BatchService implements IBatchService {
 	}
 
 	@Transactional
-	public void saveBatch(Batch batch) {
-		batchRepo.save(batch);
+	@Override
+	public Batch saveBatch(Batch batch) {
+		return batchRepo.save(batch);
 	}
 
 	@Transactional
@@ -100,8 +101,9 @@ public class BatchService implements IBatchService {
 	}
 
 	@Transactional
-	public void saveBatchDetails(BatchDetails batcheDetail) {
-		batchDetailRepo.save(batcheDetail);
+	@Override
+	public BatchDetails saveBatchDetails(BatchDetails batcheDetail) {
+		return batchDetailRepo.save(batcheDetail);
 	}
 
 	@Transactional

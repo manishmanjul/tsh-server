@@ -88,14 +88,16 @@ public class GeneralService implements IGeneralService {
 	}
 
 	@Override
-	public Optional<TimeSlot> getTimeSlot(int weekDay, Time batchTime) {
+	public Optional<TimeSlot> getTimeSlot(int weekDay, Time batchTime, Time batchEndTime) {
 
 		if (this.timeSlots == null || this.timeSlots.size() <= 0) {
 			logger.info("Retrieving all TimeSlots....");
 			this.timeSlots = this.timeSlotRepo.findAll();
 		}
 		return this.timeSlots.stream()
-				.filter(t -> t.getWeekday() == weekDay & t.getStartTime().getTime() == batchTime.getTime()).findFirst();
+				.filter(t -> t.getWeekday() == weekDay & t.getStartTime().getTime() == batchTime.getTime()
+						& t.getEndTime().getTime() == batchEndTime.getTime())
+				.findFirst();
 	}
 
 	@Override
@@ -202,12 +204,14 @@ public class GeneralService implements IGeneralService {
 			String desc = c.getDescription();
 			String shortDesc = c.getShortDescription();
 			String courseCat = "";
+			String shortCat = "";
 			String subjectStr = "";
 			StringTokenizer token = new StringTokenizer(desc, " ");
 			StringTokenizer shortToken = new StringTokenizer(shortDesc, " ");
 
 			if (shortToken.countTokens() == 1) {
 				courseCat = "Standard";
+				shortCat = "Std";
 				subjectStr = desc;
 			} else if (shortToken.countTokens() == 2) {
 				int tokenCount = token.countTokens();
@@ -215,10 +219,12 @@ public class GeneralService implements IGeneralService {
 					subjectStr = subjectStr + " " + token.nextToken();
 				}
 				courseCat = token.nextToken();
+				shortToken.nextToken();
+				shortCat = shortToken.nextToken();
 				subjectStr = subjectStr.trim();
 			}
 
-			TopicManagerCourse cc = new TopicManagerCourse(courseCat);
+			TopicManagerCourse cc = new TopicManagerCourse(courseCat, shortCat);
 			TopicManagerSubject subject = new TopicManagerSubject(subjectStr);
 			subject.setId(c.getId());
 

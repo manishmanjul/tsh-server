@@ -1,6 +1,5 @@
 package com.tsh.entities;
 
-
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -12,29 +11,30 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "term")
-public class Term extends BaseEntity{
+public class Term extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
+
 	private int term;
 	private String description;
-	
-	@Column(name= "startdate")
+
+	@Column(name = "startdate")
 	private Date startDate;
-	
-	@Column(name="enddate")
+
+	@Column(name = "enddate")
 	private Date endDate;
-	
-	private Term() {}
+
+	public Term() {
+	}
 
 	public Term(int term) {
 		this();
 		this.term = term;
 		this.description = "Term " + term;
 	}
-	
+
 	public int getId() {
 		return id;
 	}
@@ -97,4 +97,3 @@ public class Term extends BaseEntity{
 		return "Term [id=" + id + ", term=" + term + ", startDate=" + startDate + ", endDate=" + endDate + "]";
 	}
 }
-

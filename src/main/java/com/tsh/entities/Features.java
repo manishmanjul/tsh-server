@@ -1,8 +1,8 @@
 package com.tsh.entities;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -12,31 +12,31 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "features")
-public class Features extends BaseEntity{
+public class Features extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
+
 	@Column(name = "name")
 	private String name;
-	
+
 	@Column(name = "permission")
 	private String permission;
-	
+
 	@Column(name = "target")
 	private String target;
-	
+
 	@Column(name = "style")
 	private String style;
-	
+
 	@Column(name = "order")
 	private int order;
-	
-	@ManyToOne(cascade = CascadeType.REFRESH)
-	@JoinColumn(name="feature_type")
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "feature_type")
 	private FeatureType featureType;
-	
+
 	@Column(name = "description")
 	private String description;
 

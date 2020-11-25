@@ -1,5 +1,9 @@
 package com.tsh.rest.controllers;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,9 +15,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tsh.exception.TSHException;
+import com.tsh.library.TopicCompartor;
 import com.tsh.library.dto.ResponseMessage;
 import com.tsh.library.dto.TopicGenerationRequest;
 import com.tsh.library.dto.TopicManagerResponse;
+import com.tsh.library.dto.TopicRequest;
+import com.tsh.library.dto.TopicResponse;
 import com.tsh.service.IGeneralService;
 import com.tsh.service.ITopicService;
 
@@ -53,6 +60,31 @@ public class TopicManager {
 			response = ResponseMessage.UNABLE_TO_GENERATE_TOPICS.appendMessage(e.getLocalizedMessage());
 		}
 		return ResponseEntity.ok(response);
+	}
+
+	@PostMapping("/update")
+	public ResponseEntity<?> updateTopic(@RequestBody TopicRequest topicRequest) {
+		ResponseMessage response = null;
+
+		try {
+			System.out.println(topicService.updateTopic(topicRequest));
+			response = ResponseMessage.SUCCESSFULLY_UPDATED_TOPICS;
+		} catch (TSHException e) {
+			response = ResponseMessage.UNABLE_TO_UPDATE_TOPICS.appendMessage(e.getMessage());
+		}
+
+		return ResponseEntity.ok(response);
+	}
+
+	@GetMapping("/getAllTopics")
+	public List<TopicResponse> fetchAllTopics() {
+
+		List<TopicResponse> topicList = new ArrayList<>();
+		logger.info("Request to fetch all topics received...");
+		topicList = topicService.getAllActiveTopicsAsTO();
+		Collections.sort(topicList, new TopicCompartor());
+		logger.info("Returning {} active topics", topicList.size());
+		return topicList;
 	}
 
 }

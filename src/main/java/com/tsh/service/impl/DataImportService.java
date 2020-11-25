@@ -1,5 +1,6 @@
 package com.tsh.service.impl;
 
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -19,6 +20,8 @@ import com.tsh.entities.BatchDetails;
 import com.tsh.entities.Course;
 import com.tsh.entities.Grades;
 import com.tsh.entities.ImportItem;
+import com.tsh.entities.Process;
+import com.tsh.entities.ProcessDetails;
 import com.tsh.entities.Student;
 import com.tsh.entities.StudentBatches;
 import com.tsh.entities.Teacher;
@@ -33,6 +36,7 @@ import com.tsh.service.IBatchService;
 import com.tsh.service.IDataImportService;
 import com.tsh.service.IFeedbackService;
 import com.tsh.service.IGeneralService;
+import com.tsh.service.IProcessService;
 import com.tsh.service.IStudentService;
 import com.tsh.service.ITeacherService;
 import com.tsh.service.ITopicService;
@@ -58,26 +62,60 @@ public class DataImportService implements IDataImportService {
 	private ITopicService topicService;
 	@Autowired
 	private Processor commandFInder;
+	@Autowired
+	private IProcessService processService;
 
 	private DataImportService() {
 	}
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	public String importData() throws Exception {
-		List<ImportItem> items = dataImporter.importData();
+	@Override
+	public String importDataFromOutlook(int parentProcessId) throws Exception {
+		Process parent = processService.getProcessById(parentProcessId);
+		List<ImportItem> items = dataImporter.importData(parent);
 		if (items == null)
 			return "Success";
 
 		logger.info("Data received from external interface... Number of items to Import : {}", items.size());
 		int result = 0;
+
+		// Here we will take care of managing the percentage completion.
+		// Total items divided in 4 steps. Each step having equal weight
+		int totalItems = items.size();
+		int chunkSize = totalItems / 4;
+		int stepNum = 5;
+		ProcessDetails oldStep = processService.newProcessStep("Importing Data to System", stepNum++, 1.5, parent);
+		ProcessDetails newStep = null;
+		int nextChunk = chunkSize;
+		int itemNumber = 0;
 		for (ImportItem it : items) {
+			if (itemNumber++ == nextChunk) {
+				newStep = processService.closeOldAndCreateNewStep(oldStep, "Importing Data to System", stepNum++, 1.5,
+						parent);
+				nextChunk = nextChunk + chunkSize;
+				oldStep = newStep;
+			}
 			result = importThisItem(it);
 		}
 		items.clear();
+		newStep = processService.closeOldAndCreateNewStep(oldStep, "Finally Cleaning up", stepNum++, 0.25, parent);
 		manageOrphanBatchDetails();
+		if (result == 1) {
+			processService.completeProcessStep(newStep);
+		} else {
+			processService.failStep(newStep, parent);
+		}
 		return (result == 1) ? "Success" : "Error";
 	}
+
+//	@Override
+//	public Future<String> importDataFromOutlookAsync(Process parent) {
+//		return executor.submit(() -> {
+//			importDataFromOutlook(parent);
+//			return null;
+//		});
+//	}
 
 	@Transactional
 	private void manageOrphanBatchDetails() {
@@ -106,6 +144,8 @@ public class DataImportService implements IDataImportService {
 				break;
 			} catch (Exception e) {
 				item.failed();
+				saveImportItem(item);
+				logger.error("Item id : " + item.getId());
 				logger.error(e.getMessage());
 				logger.error(e.getStackTrace().toString());
 				logger.error("Failed importing Item : " + item);
@@ -117,16 +157,17 @@ public class DataImportService implements IDataImportService {
 		logger.info("{} ready for import.", item.getName());
 		try {
 			item = save(item);
-			item.imported();
 			logger.info("{} successfully Imported to the system.", item.getName());
 		} catch (TSHException e) {
 			e.printStackTrace();
+			logger.error("Item id : " + item.getId());
 			logger.error(e.getStackTrace().toString());
 			logger.error(
 					"Failed extracting data from import item ID : {}. Try importing again from the import data table.",
 					item.getId());
 			logger.error(e.getMessage());
 			item.failed();
+			saveImportItem(item);
 			return 0;
 		}
 		return 1;
@@ -137,31 +178,41 @@ public class DataImportService implements IDataImportService {
 		logger.info("Importing item : " + item);
 		item.readyForImport();
 		item = saveImportItem(item); // Save raw data to import tables
-		item.startImport();
 		return item;
 	}
 
 	private ImportItem save(ImportItem item) throws TSHException {
 		logger.info("Extracting data from Import Item...");
+		item.startImport();
+		item = saveImportItem(item);
+
+		int itemId = item.getId();
+		int batchWeekDay = item.getBatchWeekDay();
+		Time batchStartTime = item.getBatchStartTime();
+		int gradeNumber = item.getGradeNumber();
+		String subject = item.getSubject();
+		String teacherName = item.getTeacher();
+
 		if (item.getName().length() == 0 || item.getSubject().length() == 0 || item.getGrade().length() == 0) {
 			logger.info("No Data found in Item : {}. Nothing to Import.", item.getId());
 			item.imported();
+			item = saveImportItem(item);
 			return item;
 		}
 
 		// Get All master data from DB. We would need them to validate and create new
 		// instances.
-		TimeSlot timeSlot = generalService.getTimeSlot(item.getBatchWeekDay(), item.getBatchStartTime())
+		TimeSlot timeSlot = generalService
+				.getTimeSlot(item.getBatchWeekDay(), item.getBatchStartTime(), item.getBatchEndTime())
 				.orElseThrow(() -> new TSHException(
-						"No Time Slot found : " + item.getBatchWeekDay() + " : " + item.getBatchStartTime()));
+						"Item id : " + itemId + " No Time Slot found : " + batchWeekDay + " : " + batchStartTime));
 		Grades grade = generalService.getGrades(item.getGradeNumber())
-				.orElseThrow(() -> new TSHException("Grade not found : " + item.getGradeNumber()));
+				.orElseThrow(() -> new TSHException("Item id : " + itemId + "Grade not found : " + gradeNumber));
 		Course course = generalService.getCourses(item.getSubject())
-				.orElseThrow(() -> new TSHException("Course not found : " + item.getSubject()));
+				.orElseThrow(() -> new TSHException("Item id : " + itemId + "Course not found : " + subject));
 		Teacher teacher = teacherService.getTeachers(item.getTeacher())
-				.orElseThrow(() -> new TSHException("Teacher not found : " + item.getTeacher()));
-		TrainingType trainingType = generalService.getTrainingType(item.getLocation())
-				.orElseThrow(() -> new TSHException("Location : " + item.getLocation() + " not a valid Location."));
+				.orElseThrow(() -> new TSHException("Item id : " + itemId + "Teacher not found : " + teacherName));
+		TrainingType trainingType = generalService.getTrainingType(item.getLocation()).orElse(null);
 		Term term = generalService.getCurrentTerm().orElseThrow(() -> new TSHException("Current term not found"));
 		BatchDetails batchDetails = batchService.getBatchDetails(teacher, grade, course, timeSlot, trainingType, term)
 				.orElse(null);
@@ -171,13 +222,16 @@ public class DataImportService implements IDataImportService {
 			// Check if a batch at that TimeSot exists. If not then create a Batch with this
 			// timeSlot.
 			Batch batch = batchService.getBatch(timeSlot).orElse(null);
-			if (batch == null)
+			if (batch == null) {
 				batch = Batch.getNewInstance(timeSlot);
-
+				batchService.saveBatch(batch);
+			}
 			// Now create a batchDetails
 			batchDetails = BatchDetails.getNewInstance(batch, teacher, course, grade);
 			batchDetails.setTrainingType(trainingType);
 			batchDetails.setTerm(term);
+			batchService.saveBatchDetails(batchDetails);
+
 			logger.info(batchDetails.toString());
 		}
 
@@ -186,6 +240,8 @@ public class DataImportService implements IDataImportService {
 		if (student == null) { // New Student & new StudentBatch.
 			logger.info("No record found for Student : {}. Creating a new record", item.getName());
 			student = Student.getNewInstance(item, grade);
+			student = studentService.saveStudent(student);
+
 			studentBatches = StudentBatches.getNewInstance(student, course);
 			studentBatches.setBatchDetails(batchDetails);
 			logger.info(studentBatches.toString());
@@ -209,14 +265,13 @@ public class DataImportService implements IDataImportService {
 				logger.info("Preparing to save import data in Database...");
 				studentService.save(newStudentBatch);
 				logger.info("Import Data saved successfully to database.");
-				item.imported();
 			} else {
 				logger.info("Item {} already exist. Skiping this item", item.getName());
-				item.imported();
 			}
-
 		}
 		studentService.save(studentBatches);
+		item.imported();
+		item = saveImportItem(item);
 		return item;
 	}
 

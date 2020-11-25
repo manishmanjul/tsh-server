@@ -12,6 +12,8 @@ public class ResponseMessage {
 			"Successfully Added a new User");
 	public final static ResponseMessage SUCCESSFULLY_GENERATED_TOPICS = new ResponseMessage(SUCCESS,
 			"Successfully Added a new Topics");
+	public final static ResponseMessage SUCCESSFULLY_UPDATED_TOPICS = new ResponseMessage(SUCCESS,
+			"Successfully Updated the Topic");
 	public final static ResponseMessage INVALID_USERNAME_PASSWORD = new ResponseMessage(201,
 			"Invalid User Name or Password");
 	public final static ResponseMessage SESSION_EXPIRED = new ResponseMessage(401,
@@ -27,6 +29,7 @@ public class ResponseMessage {
 			"Unable to fetch Batch Details");
 	public final static ResponseMessage UNABLE_TO_GENERATE_TOPICS = new ResponseMessage(306,
 			"Unable to generate Topics");
+	public final static ResponseMessage UNABLE_TO_UPDATE_TOPICS = new ResponseMessage(307, "Unable to update Topics");
 	public final static ResponseMessage STUDENT_FEEDBACK_UPDATED = new ResponseMessage(100,
 			"Feedback Saved Successfully");
 	public final static String SUCCESS_STRING = "Success";

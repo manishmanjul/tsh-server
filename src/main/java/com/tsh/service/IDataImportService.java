@@ -10,10 +10,12 @@ import com.tsh.entities.Topics;
 import com.tsh.exception.TSHException;
 
 @Service
-public interface IDataImportService extends TshService{
+public interface IDataImportService extends TshService {
 
-	String importData() throws Exception;
-	
+	String importDataFromOutlook(int parentProcessId) throws Exception;
+
+//	Future<String> importDataFromOutlookAsync(Process Parent);
+
 	Map<String, List<Topics>> processFile(MultipartFile importedFile, String command) throws TSHException;
 
 }

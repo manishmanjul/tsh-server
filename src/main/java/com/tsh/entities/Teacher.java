@@ -1,7 +1,9 @@
 package com.tsh.entities;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -10,30 +12,31 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="teacher")
-public class Teacher extends BaseEntity{
-	
+@Table(name = "teacher")
+public class Teacher extends BaseEntity {
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
-	@Column(name="teacher_name")
+
+	@Column(name = "teacher_name")
 	private String teacherName;
-	
-	@Column(name="email")
+
+	@Column(name = "email")
 	private String email;
-	
-	@Column(name="phone")
+
+	@Column(name = "phone")
 	private String phone;
-	
-	@Column(name="active")
+
+	@Column(name = "active")
 	private boolean active;
-	
-	@OneToOne
-	@JoinColumn(name="user_id")
+
+	@OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+	@JoinColumn(name = "user_id")
 	private User user;
-	
-	public Teacher() {}
+
+	public Teacher() {
+	}
 
 	public int getId() {
 		return id;
