@@ -10,9 +10,12 @@ import com.tsh.entities.Feedback;
 import com.tsh.entities.FeedbackCategory;
 import com.tsh.entities.StudentBatches;
 import com.tsh.entities.StudentFeedback;
+import com.tsh.entities.Teacher;
 import com.tsh.entities.Topics;
 import com.tsh.exception.TSHException;
+import com.tsh.library.dto.DeleteFeedbackRequest;
 import com.tsh.library.dto.StudentFeedbackRequestTO;
+import com.tsh.library.dto.TopicsTO;
 
 @Service
 public interface IFeedbackService {
@@ -22,6 +25,9 @@ public interface IFeedbackService {
 	Feedback getFeedbackByShortDescription(String shortDescription);
 
 	List<StudentFeedback> saveAllStudentFeedbacks(List<StudentFeedback> feedbacks);
+
+	List<StudentFeedback> getStudentFeedbackByBatchTopicAndTeacher(StudentBatches studentBatches, Topics topic,
+			Teacher teacher);
 
 	List<StudentFeedback> getAllFeedbacks(StudentBatches studentBatches, Topics topic);
 
@@ -35,5 +41,9 @@ public interface IFeedbackService {
 			throws TSHException;
 
 	public StudentFeedback saveFeedback(StudentFeedback feedback) throws TSHException;
+
+	public List<TopicsTO> populateAllFeedbacksWithProviders(List<TopicsTO> topicTOList, StudentBatches studentBatches);
+
+	public void deleteFeedback(DeleteFeedbackRequest request);
 
 }

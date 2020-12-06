@@ -168,6 +168,21 @@ public class Topics extends BaseEntity {
 		this.active = active;
 	}
 
+	public String getTopicFullName() {
+		String topicDescription = getTopicName();
+		if (topicDescription.length() > 0)
+			topicDescription = topicDescription + " : " + getDescription();
+		else
+			topicDescription = getDescription();
+
+		if (topicDescription.length() > 0)
+			topicDescription = topicDescription + " : " + getChapter();
+		else
+			topicDescription = getChapter();
+
+		return topicDescription;
+	}
+
 	@Override
 	public String toString() {
 		return "Topics [chapter=" + chapter + ", description=" + description + ", topicName=" + topicName

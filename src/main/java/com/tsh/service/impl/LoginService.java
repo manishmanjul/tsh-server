@@ -25,19 +25,19 @@ public class LoginService implements ILoginService {
 	private FeaturesRepository featuresRepo;
 	@Autowired
 	private RolesRepository rolesRepo;
-	
+
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		
+
 		User user = userRepo.findByName(username);
-		if(user == null)
+		if (user == null)
 			throw new UsernameNotFoundException("User 404");
 		return new UserPrinciple(user);
 	}
 
 	@Override
 	public List<Features> finAllFeaturesByRole(Role role) {
-		
+
 		return featuresRepo.findByRole(role.getPermissionString());
 	}
 
@@ -48,15 +48,21 @@ public class LoginService implements ILoginService {
 
 	@Override
 	public User addNewUser(User newUser) {
-		return userRepo.save(newUser);		
+		return userRepo.save(newUser);
 	}
 
 	@Override
 	public boolean isExistingUser(User newUser) {
 		List<User> users = userRepo.findAllByName(newUser.getName());
 		for (User user : users) {
-			if(user.equals(newUser)) return true;
+			if (user.equals(newUser))
+				return true;
 		}
 		return false;
+	}
+
+	@Override
+	public boolean isUserNameExist(String userName) {
+		return userRepo.existsByName(userName);
 	}
 }

@@ -20,6 +20,9 @@ public class Course extends BaseEntity {
 	@Column(name = "short_description")
 	private String shortDescription;
 
+	@Column(name = "category")
+	private int category;
+
 	public Course() {
 	}
 
@@ -50,6 +53,14 @@ public class Course extends BaseEntity {
 
 	public void setShortDescription(String shortDescription) {
 		this.shortDescription = shortDescription;
+	}
+
+	public int getCategory() {
+		return category;
+	}
+
+	public void setCategory(int category) {
+		this.category = category;
 	}
 
 	@Override

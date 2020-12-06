@@ -19,15 +19,22 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tsh.entities.BatchDetails;
 import com.tsh.entities.BatchProgress;
 import com.tsh.entities.FeedbackCategory;
+import com.tsh.entities.Student;
+import com.tsh.entities.StudentBatches;
 import com.tsh.exception.TSHException;
+import com.tsh.library.dto.DeleteFeedbackRequest;
 import com.tsh.library.dto.FeedbackCategoryTO;
 import com.tsh.library.dto.FeedbackResponseTO;
 import com.tsh.library.dto.FeedbackTO;
 import com.tsh.library.dto.ResponseMessage;
+import com.tsh.library.dto.SimpleIDRequest;
 import com.tsh.library.dto.StudentFeedbackRequestTO;
+import com.tsh.library.dto.StudentFeedbackResponseTO;
+import com.tsh.library.dto.TopicsTO;
 import com.tsh.service.IBatchService;
 import com.tsh.service.IFeedbackService;
 import com.tsh.service.IProgressService;
+import com.tsh.service.IStudentService;
 
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
@@ -40,6 +47,8 @@ public class FeedbackController {
 	private IBatchService batchService;
 	@Autowired
 	private IProgressService progressService;
+	@Autowired
+	private IStudentService studentService;
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@GetMapping("/category")
@@ -124,6 +133,38 @@ public class FeedbackController {
 
 		logger.info("Feedback update sucessfully completed. Returned Batch details.");
 		response.setMessage(ResponseMessage.STUDENT_FEEDBACK_UPDATED);
+		return response;
+	}
+
+	@PostMapping("/getSingleStudentFeedback")
+	public StudentFeedbackResponseTO studentBatchesFeedback(@RequestBody SimpleIDRequest studentBatchId) {
+		StudentFeedbackResponseTO response = new StudentFeedbackResponseTO();
+		logger.info("getSingleStudentFeedback...");
+		try {
+			StudentBatches studentBatch = studentService.getStudentBatchesById(studentBatchId.getId());
+			Student stud = studentBatch.getStudent();
+			logger.info("Retreive Feedback Data for {}", stud.getStudentName());
+
+			List<TopicsTO> allTopics = progressService.getAllTopicsProgress(stud, studentBatch.getCourse());
+
+			response.setTopics(feedbackService.populateAllFeedbacksWithProviders(allTopics, studentBatch));
+			response.setMessage(ResponseMessage.GENERAL_SUCCESS);
+		} catch (Exception e) {
+			response.setMessage(ResponseMessage.GENERAL_FAIL.appendMessage(e.getLocalizedMessage()));
+		}
+		return response;
+	}
+
+	@PostMapping("/deleteFeedback")
+	public ResponseMessage deleteFeedback(@RequestBody DeleteFeedbackRequest request) {
+		ResponseMessage response = null;
+		logger.info("Deleting Feedback for topic id: {}", request.getTopicId());
+		try {
+			feedbackService.deleteFeedback(request);
+			response = ResponseMessage.GENERAL_SUCCESS;
+		} catch (Exception e) {
+			response = ResponseMessage.GENERAL_FAIL.appendMessage(e.getLocalizedMessage());
+		}
 		return response;
 	}
 }

@@ -1,7 +1,9 @@
 package com.tsh.service.impl;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ import com.tsh.entities.Topics;
 import com.tsh.exception.TSHException;
 import com.tsh.library.dto.StudentFeedbackRequestTO;
 import com.tsh.library.dto.StudentRequestTO;
+import com.tsh.library.dto.TopicsTO;
 import com.tsh.repositories.BatchProgressRepository;
 import com.tsh.repositories.TopicProgressRepository;
 import com.tsh.service.IGeneralService;
@@ -293,6 +296,21 @@ public class ProgressService implements IProgressService {
 	@Override
 	public List<BatchProgress> getAllBatchProgressForStatus(BatchDetails batchDetails, TopicStatus status) {
 		return batchProgressRepo.findByBatchDetailsAndStatusOrderByStartDateDesc(batchDetails, status);
+	}
+
+	@Override
+	public List<TopicsTO> getAllTopicsProgress(Student student, Course course) {
+		ModelMapper mapper = new ModelMapper();
+		List<TopicProgress> topicProgressList = topicProgressRepo
+				.findByStudentAndCourseCategoryOrderByStartDateDesc(student, course.getCategory());
+		logger.info("{} topics found in complete state.", topicProgressList.size());
+
+		List<TopicsTO> topicTOList = topicProgressList.stream().map(tp -> {
+			TopicsTO topicTO = mapper.map(tp.getTopic(), TopicsTO.class);
+			return topicTO;
+		}).collect(Collectors.toList());
+
+		return topicTOList;
 	}
 
 }

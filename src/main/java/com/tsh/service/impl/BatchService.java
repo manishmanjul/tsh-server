@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,7 +45,7 @@ import com.tsh.service.ITopicService;
 import com.tsh.utility.TshUtil;
 
 @Service
-@Scope("singleton")
+@Scope(value = "request", proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class BatchService implements IBatchService {
 
 	private List<BatchDetails> batchDetails;
@@ -52,7 +53,7 @@ public class BatchService implements IBatchService {
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	private BatchService() {
+	public BatchService() {
 	}
 
 	@Autowired
@@ -166,7 +167,7 @@ public class BatchService implements IBatchService {
 			TopicProgress topicProgress = progressService.getStudentLastTopicProgress(studentBatch.getStudent(),
 					studentBatch.getCourse());
 			if (topicProgress != null) {
-				studentTO.setPreviousTopic(topicProgress.getTopic().getDescription());
+				studentTO.setPreviousTopic(topicProgress.getTopic().getTopicFullName());
 
 				List<StudentFeedback> feedbacks = feedbackService.getAllFeedbacks(studentBatch,
 						topicProgress.getTopic());

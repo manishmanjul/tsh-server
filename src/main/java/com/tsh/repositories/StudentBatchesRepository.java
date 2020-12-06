@@ -9,13 +9,16 @@ import com.tsh.entities.BatchDetails;
 import com.tsh.entities.Course;
 import com.tsh.entities.Student;
 import com.tsh.entities.StudentBatches;
+import com.tsh.entities.Teacher;
 
 @Repository
-public interface StudentBatchesRepository extends JpaRepository<StudentBatches, Integer>{
-	
+public interface StudentBatchesRepository extends JpaRepository<StudentBatches, Integer> {
+
 	public List<StudentBatches> findByStudent(Student student);
-	
+
 	public List<StudentBatches> findByBatchDetails(BatchDetails batchDetails);
-	
+
 	public List<StudentBatches> findByStudentAndCourse(Student stud, Course course);
+
+	public List<StudentBatches> findAllByBatchDetailsTeacher(Teacher teacher);
 }

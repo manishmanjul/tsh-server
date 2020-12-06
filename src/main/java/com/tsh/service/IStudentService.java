@@ -11,6 +11,8 @@ import com.tsh.entities.Grades;
 import com.tsh.entities.ImportItem;
 import com.tsh.entities.Student;
 import com.tsh.entities.StudentBatches;
+import com.tsh.entities.Teacher;
+import com.tsh.library.dto.StudentTO;
 
 @Service
 public interface IStudentService extends TshService {
@@ -20,6 +22,8 @@ public interface IStudentService extends TshService {
 	Optional<StudentBatches> getStudentBatches(Student student, Course course);
 
 	List<StudentBatches> getStudentBatches(BatchDetails batch);
+
+	List<StudentTO> getStudentsForTeacher(Teacher teacher);
 
 	Student getStudentByNameAndGrade(String name, Grades grade);
 

@@ -12,6 +12,7 @@ import com.tsh.entities.TopicProgress;
 import com.tsh.entities.TopicStatus;
 import com.tsh.exception.TSHException;
 import com.tsh.library.dto.StudentFeedbackRequestTO;
+import com.tsh.library.dto.TopicsTO;
 
 @Service
 public interface IProgressService extends TshService {
@@ -34,4 +35,6 @@ public interface IProgressService extends TshService {
 
 	public TopicProgress manageCurrentAndNextTopicProgress(BatchDetails batchDetails,
 			StudentFeedbackRequestTO inputData) throws TSHException;
+
+	public List<TopicsTO> getAllTopicsProgress(Student student, Course course);
 }

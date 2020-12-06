@@ -6,9 +6,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
 
 import com.tsh.entities.BatchDetails;
@@ -23,9 +26,15 @@ import com.tsh.entities.Term;
 import com.tsh.entities.Topics;
 import com.tsh.entities.Week;
 import com.tsh.exception.TSHException;
+import com.tsh.library.dto.DeleteFeedbackRequest;
+import com.tsh.library.dto.FeedbackCategoryTO;
+import com.tsh.library.dto.FeedbackProvider;
 import com.tsh.library.dto.FeedbackRequestTO;
+import com.tsh.library.dto.FeedbackTO;
 import com.tsh.library.dto.StudentFeedbackRequestTO;
 import com.tsh.library.dto.StudentRequestTO;
+import com.tsh.library.dto.TeacherTO;
+import com.tsh.library.dto.TopicsTO;
 import com.tsh.repositories.FeedbackCategoryRepository;
 import com.tsh.repositories.FeedbackRepository;
 import com.tsh.repositories.StudentFeedbackRepository;
@@ -37,6 +46,7 @@ import com.tsh.service.ITopicService;
 import com.tsh.utility.TshUtil;
 
 @Service
+@Scope(value = "request", proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class FeedbackService implements IFeedbackService {
 
 	@Autowired
@@ -55,6 +65,9 @@ public class FeedbackService implements IFeedbackService {
 	private ITopicService topicService;
 
 	Logger logger = LoggerFactory.getLogger(this.getClass());
+
+	public FeedbackService() {
+	}
 
 	@Override
 	public Map<String, List<Topics>> validateAndSync(List<Topics> topicList) throws TSHException {
@@ -220,5 +233,78 @@ public class FeedbackService implements IFeedbackService {
 	@Override
 	public Feedback getFeedbackById(int feedbackId) {
 		return feedbackRepo.findById(feedbackId).orElse(null);
+	}
+
+	@Override
+	public List<TopicsTO> populateAllFeedbacksWithProviders(List<TopicsTO> topicTOList, StudentBatches studentBatches) {
+		logger.info("Constructing feedback data for all completed topics");
+
+		ModelMapper mapper = new ModelMapper();
+		List<TopicsTO> returnList = new ArrayList<>();
+
+		for (TopicsTO topic : topicTOList) {
+			List<FeedbackProvider> providers = new ArrayList<>();
+			FeedbackProvider provider = null;
+
+			List<StudentFeedback> studFeedbacks = studentFeedbackRepo
+					.findByStudentBatchesAndTopicIdOrderByTeacher(studentBatches, topic.getId());
+			for (StudentFeedback feedback : studFeedbacks) {
+				TeacherTO teacherTO = mapper.map(feedback.getTeacher(), TeacherTO.class);
+				provider = new FeedbackProvider();
+				provider.setTeacher(teacherTO);
+				provider.setFeedbackDate(feedback.getFeedbackDate());
+				provider.setStudentBatch(studentBatches);
+
+				int index = providers.indexOf(provider);
+
+				// Is the provider with this teacher already in the list. Get that or else
+				// create a new one.
+				if (index < 0) {
+					providers.add(provider);
+				} else {
+					provider = providers.get(index);
+				}
+
+				// Now lets see if a feedback category is already there in this provider.
+				FeedbackCategoryTO feedbackCategoryTO = mapper.map(feedback.getFeedback().getCategory(),
+						FeedbackCategoryTO.class);
+				feedbackCategoryTO.setFeedbacks(null);
+				if (provider.getFeedbackCategory() != null)
+					index = provider.getFeedbackCategory().indexOf(feedbackCategoryTO);
+				else
+					index = -1;
+
+				if (index < 0) {
+					provider.addFeedbackCategory(feedbackCategoryTO);
+				} else {
+					feedbackCategoryTO = provider.getFeedbackCategory().get(index);
+				}
+
+				FeedbackTO feedbackTO = mapper.map(feedback.getFeedback(), FeedbackTO.class);
+				feedbackCategoryTO.setTeachersComment(feedback.getFeedbackText());
+				feedbackCategoryTO.addFedback(feedbackTO);
+			}
+			if (providers != null && providers.size() > 0) {
+				topic.setProviders(providers);
+				returnList.add(topic);
+			}
+		}
+		return returnList;
+	}
+
+	@Override
+	public void deleteFeedback(DeleteFeedbackRequest request) {
+		StudentBatches studentBatch = studentService.getStudentBatchesById(request.getStudentBatchId());
+		Topics topic = topicService.getTopicById(request.getTopicId());
+		Teacher teacher = teacherService.findById(request.getTeacherId());
+		List<StudentFeedback> feedbacks = getStudentFeedbackByBatchTopicAndTeacher(studentBatch, topic, teacher);
+
+		studentFeedbackRepo.deleteAll(feedbacks);
+	}
+
+	@Override
+	public List<StudentFeedback> getStudentFeedbackByBatchTopicAndTeacher(StudentBatches studentBatches, Topics topic,
+			Teacher teacher) {
+		return studentFeedbackRepo.findByStudentBatchesAndTopicAndTeacher(studentBatches, topic, teacher);
 	}
 }

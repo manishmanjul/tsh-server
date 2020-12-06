@@ -12,9 +12,12 @@ import com.tsh.entities.TopicStatus;
 import com.tsh.entities.Topics;
 
 @Repository
-public interface TopicProgressRepository extends JpaRepository<TopicProgress, Integer>{
-	
+public interface TopicProgressRepository extends JpaRepository<TopicProgress, Integer> {
+
 	public List<TopicProgress> findByStudentAndCourseOrderByStartDateDesc(Student student, Course course);
-	
-	public TopicProgress findByStudentAndCourseAndTopicAndStatusNot(Student student, Course course, Topics topic, TopicStatus status);
+
+	public TopicProgress findByStudentAndCourseAndTopicAndStatusNot(Student student, Course course, Topics topic,
+			TopicStatus status);
+
+	public List<TopicProgress> findByStudentAndCourseCategoryOrderByStartDateDesc(Student student, int category);
 }

@@ -164,6 +164,23 @@ public class TopicService implements ITopicService {
 			// take precedence over in progress topic. So check if there is anything
 			// planned.
 			topicToReturn = findPlannedTopicBetween(batchDetails, startOfWeek, endOfWeek);
+
+			// If nothing is planned for this week then may be today is a day after this
+			// weeks class.
+			// Example - the class was on Monday and today is Tuesday. In this case see if
+			// there is anything
+			// planned for next week
+
+			Calendar now = Calendar.getInstance();
+			now.add(Calendar.DATE, 7);
+
+			Calendar startOfNextWeek = Calendar.getInstance();
+			startOfNextWeek.setTime(TshUtil.getFirstDayOfWeek(now.getTime()));
+			Calendar endOfNextWeek = Calendar.getInstance();
+			endOfNextWeek.setTime(TshUtil.getLastDayOfWeek(now.getTime()));
+
+			topicToReturn = findPlannedTopicBetween(batchDetails, startOfNextWeek, endOfNextWeek);
+
 		} else {
 			Calendar now = Calendar.getInstance();
 			now.add(Calendar.DATE, 7);

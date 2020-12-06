@@ -1,5 +1,6 @@
 package com.tsh.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,6 +17,8 @@ import com.tsh.entities.Grades;
 import com.tsh.entities.ImportItem;
 import com.tsh.entities.Student;
 import com.tsh.entities.StudentBatches;
+import com.tsh.entities.Teacher;
+import com.tsh.library.dto.StudentTO;
 import com.tsh.repositories.StudentBatchesRepository;
 import com.tsh.repositories.StudentRepository;
 import com.tsh.service.IStudentService;
@@ -79,5 +82,22 @@ public class StudentService implements IStudentService {
 	@Override
 	public Student saveStudent(Student student) {
 		return studentRepo.save(student);
+	}
+
+	@Override
+	public List<StudentTO> getStudentsForTeacher(Teacher teacher) {
+		List<StudentTO> studentTOList = new ArrayList<>();
+		List<StudentBatches> studentBatches = studentBatchesRepo.findAllByBatchDetailsTeacher(teacher);
+		for (StudentBatches studBatch : studentBatches) {
+			if (studBatch.getStudent().isActive()) {
+				StudentTO studentTO = new StudentTO();
+				studentTO.setId(studBatch.getId());
+				studentTO.setName(studBatch.getStudent().getStudentName());
+				studentTO.setGrade(studBatch.getBatchDetails().getGrade().getGrade() + "");
+				studentTO.setCourse(studBatch.getCourse().getShortDescription());
+				studentTOList.add(studentTO);
+			}
+		}
+		return studentTOList;
 	}
 }

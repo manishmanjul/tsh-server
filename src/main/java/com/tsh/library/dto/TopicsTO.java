@@ -2,7 +2,9 @@ package com.tsh.library.dto;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import com.tsh.entities.Course;
@@ -28,6 +30,8 @@ public class TopicsTO {
 	private String endDate;
 	private String plannedStartDate;
 	private String plannedEndDate;
+
+	private List<FeedbackProvider> providers;
 
 	public int getId() {
 		return id;
@@ -161,4 +165,17 @@ public class TopicsTO {
 		this.topicName = topicName;
 	}
 
+	public List<FeedbackProvider> getProviders() {
+		return providers;
+	}
+
+	public void setProviders(List<FeedbackProvider> providers) {
+		this.providers = providers;
+	}
+
+	public void addFeedbackProvider(FeedbackProvider provider) {
+		if (providers == null)
+			providers = new ArrayList<>();
+		providers.add(provider);
+	}
 }

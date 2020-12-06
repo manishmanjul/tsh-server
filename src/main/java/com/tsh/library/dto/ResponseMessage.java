@@ -14,6 +14,9 @@ public class ResponseMessage {
 			"Successfully Added a new Topics");
 	public final static ResponseMessage SUCCESSFULLY_UPDATED_TOPICS = new ResponseMessage(SUCCESS,
 			"Successfully Updated the Topic");
+	public final static ResponseMessage GENERAL_SUCCESS = new ResponseMessage(SUCCESS,
+			"Operation sucessfully performed");
+	public final static ResponseMessage GENERAL_FAIL = new ResponseMessage(ERROR, "Operation failed!!!");
 	public final static ResponseMessage INVALID_USERNAME_PASSWORD = new ResponseMessage(201,
 			"Invalid User Name or Password");
 	public final static ResponseMessage SESSION_EXPIRED = new ResponseMessage(401,
