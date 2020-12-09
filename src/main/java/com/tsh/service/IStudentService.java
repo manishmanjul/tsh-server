@@ -12,6 +12,7 @@ import com.tsh.entities.ImportItem;
 import com.tsh.entities.Student;
 import com.tsh.entities.StudentBatches;
 import com.tsh.entities.Teacher;
+import com.tsh.exception.TSHException;
 import com.tsh.library.dto.StudentTO;
 
 @Service
@@ -32,5 +33,7 @@ public interface IStudentService extends TshService {
 	int save(StudentBatches newStudentBatch);
 
 	Student saveStudent(Student student);
+
+	public boolean markAbsent(StudentBatches studentBatch) throws TSHException;
 
 }

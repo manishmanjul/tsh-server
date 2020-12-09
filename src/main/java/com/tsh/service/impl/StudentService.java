@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.tsh.entities.Attendence;
 import com.tsh.entities.BatchDetails;
 import com.tsh.entities.Course;
 import com.tsh.entities.Grades;
@@ -18,10 +19,13 @@ import com.tsh.entities.ImportItem;
 import com.tsh.entities.Student;
 import com.tsh.entities.StudentBatches;
 import com.tsh.entities.Teacher;
+import com.tsh.exception.TSHException;
 import com.tsh.library.dto.StudentTO;
+import com.tsh.repositories.AttendenceRepository;
 import com.tsh.repositories.StudentBatchesRepository;
 import com.tsh.repositories.StudentRepository;
 import com.tsh.service.IStudentService;
+import com.tsh.utility.TshUtil;
 
 @Service
 public class StudentService implements IStudentService {
@@ -40,6 +44,8 @@ public class StudentService implements IStudentService {
 	private StudentRepository studentRepo;
 	@Autowired
 	private StudentBatchesRepository studentBatchesRepo;
+	@Autowired
+	private AttendenceRepository attendenceRepo;
 
 	public Optional<Student> getStudent(ImportItem item) {
 		logger.info("Finding Student...");
@@ -99,5 +105,18 @@ public class StudentService implements IStudentService {
 			}
 		}
 		return studentTOList;
+	}
+
+	@Override
+	public boolean markAbsent(StudentBatches studentBatch) throws TSHException {
+		Attendence attnd = new Attendence();
+		attnd.setStudent(studentBatch);
+		attnd.setAbsenseDate(TshUtil.format(TshUtil.getCurrentDate()));
+
+		attnd = attendenceRepo.save(attnd);
+		if (attnd == null)
+			return false;
+
+		return true;
 	}
 }

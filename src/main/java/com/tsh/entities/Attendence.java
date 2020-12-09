@@ -1,6 +1,6 @@
 package com.tsh.entities;
 
-import java.sql.Date;
+import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -21,14 +21,14 @@ public class Attendence extends BaseEntity {
 	private int id;
 
 	@ManyToOne(fetch = FetchType.EAGER)
-	@JoinColumn(name = "student_id")
-	private Student student;
+	@JoinColumn(name = "student_batch_id")
+	private StudentBatches studentBatch;
 
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "teacher_id")
 	private Teacher teacher;
 
-	@Column(name = "absense_date")
+	@Column(name = "absence_date")
 	private Date absenseDate;
 
 	@Column(name = "half_day")
@@ -45,12 +45,12 @@ public class Attendence extends BaseEntity {
 		this.id = id;
 	}
 
-	public Student getStudent() {
-		return student;
+	public StudentBatches getStudent() {
+		return studentBatch;
 	}
 
-	public void setStudent(Student student) {
-		this.student = student;
+	public void setStudent(StudentBatches studentBatch) {
+		this.studentBatch = studentBatch;
 	}
 
 	public Teacher getTeacher() {

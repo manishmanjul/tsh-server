@@ -8,10 +8,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tsh.entities.StudentBatches;
 import com.tsh.entities.Teacher;
+import com.tsh.exception.TSHException;
+import com.tsh.library.dto.ResponseMessage;
+import com.tsh.library.dto.SimpleIDRequest;
 import com.tsh.library.dto.StudentTO;
 import com.tsh.library.dto.UserPrinciple;
 import com.tsh.service.IStudentService;
@@ -36,5 +42,22 @@ public class StudentController {
 		logger.info("Return all active students for user : {} : {}", principle.getUser(), teacher.getTeacherName());
 
 		return studentService.getStudentsForTeacher(teacher);
+	}
+
+	@PostMapping("/markAbsent")
+	public ResponseMessage setAbsent(@RequestBody SimpleIDRequest studentBatchId) {
+
+		ResponseMessage response;
+
+		StudentBatches studentBatch = studentService.getStudentBatchesById(studentBatchId.getId());
+		logger.info("Setting {} absent today.", studentBatch.getStudent().getStudentName());
+		try {
+			studentService.markAbsent(studentBatch);
+			response = ResponseMessage.GENERAL_SUCCESS;
+		} catch (TSHException e) {
+			response = ResponseMessage.GENERAL_FAIL.appendMessage(e.getLocalizedMessage());
+		}
+
+		return response;
 	}
 }
