@@ -16,6 +16,7 @@ import com.tsh.entities.TimeSlot;
 import com.tsh.entities.TrainingType;
 import com.tsh.exception.TSHException;
 import com.tsh.library.dto.ScheduleTO;
+import com.tsh.library.dto.TopicsTO;
 
 @Service
 public interface IBatchService extends TshService {
@@ -34,6 +35,8 @@ public interface IBatchService extends TshService {
 	Optional<Batch> getBatch(TimeSlot timeSlot);
 
 	List<ScheduleTO> getSchedulesFor(Teacher teacher) throws ParseException, TSHException;
+
+	public List<TopicsTO> getBAtchTopics(BatchDetails batch);
 
 	ScheduleTO getBatchDetails(BatchDetails batchDetails) throws TSHException, ParseException;
 

@@ -11,14 +11,14 @@ import com.tsh.entities.TrainingType;
 import com.tsh.service.impl.TrainingTypeService;
 
 @RestController
-@RequestMapping("trtypes")
+@RequestMapping("/trtypes")
 public class TrainingTypeController {
 
 	@Autowired
 	private TrainingTypeService service;
-	
+
 	@GetMapping
-	public List<TrainingType> getAllTrainigTypes(){
+	public List<TrainingType> getAllTrainigTypes() {
 		return service.findAll();
 	}
 }

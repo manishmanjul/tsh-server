@@ -156,8 +156,25 @@ public class FeedbackService implements IFeedbackService {
 	}
 
 	@Override
-	public List<FeedbackCategory> getAllActiveFeedbackCategories() {
-		return feedbackCategoryRepo.findByActiveOrderByOrder(true);
+	public List<FeedbackCategory> getAllActiveFeedbackCategories(int grade) {
+		List<FeedbackCategory> returnList = null;
+
+		returnList = feedbackCategoryRepo.findByGradeAndActiveOrderByOrder(grade, true);
+		if (returnList == null || returnList.size() == 0)
+			returnList = feedbackCategoryRepo.findByGradeAndActiveOrderByOrder(0, true);
+
+		return returnList;
+	}
+
+	@Override
+	public List<FeedbackCategory> getAllFeedbackCategories(int grade) {
+		List<FeedbackCategory> returnList = null;
+
+		returnList = feedbackCategoryRepo.findByGradeOrderByOrder(grade);
+		if (returnList == null || returnList.size() == 0)
+			returnList = feedbackCategoryRepo.findByGradeOrderByOrder(0);
+
+		return returnList;
 	}
 
 	@Override

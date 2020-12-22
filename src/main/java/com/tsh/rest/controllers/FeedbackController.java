@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -51,14 +52,19 @@ public class FeedbackController {
 	private IStudentService studentService;
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	@GetMapping("/category")
-	public List<FeedbackCategoryTO> getAllFeedbackCategory() {
-		logger.info("Processing request to get all active feedback categories");
+	@GetMapping("/category/{grade}/{active}")
+	public List<FeedbackCategoryTO> getAllFeedbackCategory(@PathVariable("grade") String grade,
+			@PathVariable("active") boolean active) {
+		logger.info("Processing request to get all active feedback categories for grade : " + grade);
 		List<FeedbackCategoryTO> categoriesTO = new ArrayList<>();
 		List<FeedbackCategory> categories = new ArrayList<>();
 		ModelMapper mapper = new ModelMapper();
 
-		categories = feedbackService.getAllActiveFeedbackCategories();
+		if (active)
+			categories = feedbackService.getAllActiveFeedbackCategories(Integer.parseInt(grade));
+		else
+			categories = feedbackService.getAllFeedbackCategories(Integer.parseInt(grade));
+
 		logger.info("{} feedback categories fetched.", categories.size());
 		categoriesTO = categories.stream().map(cat -> {
 			FeedbackCategoryTO catTO = mapper.map(cat, FeedbackCategoryTO.class);

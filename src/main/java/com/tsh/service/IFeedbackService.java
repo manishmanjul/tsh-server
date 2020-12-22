@@ -33,7 +33,9 @@ public interface IFeedbackService {
 
 	public Feedback getFeedbackById(int feedbackId);
 
-	List<FeedbackCategory> getAllActiveFeedbackCategories();
+	List<FeedbackCategory> getAllActiveFeedbackCategories(int grade);
+
+	List<FeedbackCategory> getAllFeedbackCategories(int grade);
 
 	Map<String, String> getDummyFeedbackMap();
 

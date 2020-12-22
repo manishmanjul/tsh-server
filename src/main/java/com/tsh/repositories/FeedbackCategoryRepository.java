@@ -8,7 +8,9 @@ import org.springframework.stereotype.Repository;
 import com.tsh.entities.FeedbackCategory;
 
 @Repository
-public interface FeedbackCategoryRepository extends JpaRepository<FeedbackCategory, Integer>{
-	
-	public List<FeedbackCategory> findByActiveOrderByOrder(boolean active);
+public interface FeedbackCategoryRepository extends JpaRepository<FeedbackCategory, Integer> {
+
+	public List<FeedbackCategory> findByGradeAndActiveOrderByOrder(int grade, boolean active);
+
+	public List<FeedbackCategory> findByGradeOrderByOrder(int grade);
 }

@@ -18,13 +18,13 @@ import com.tsh.configuration.filter.JwtFilter;
 
 @Configuration
 @EnableWebSecurity
-public class AppSecurityConfig extends WebSecurityConfigurerAdapter{
+public class AppSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Autowired
 	private UserDetailsService userDetailService;
 	@Autowired
 	private JwtFilter jwtFilter;
-	
+
 	@Bean
 	public AuthenticationProvider authProvider() {
 		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -35,12 +35,12 @@ public class AppSecurityConfig extends WebSecurityConfigurerAdapter{
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http
-		.csrf().disable()
-		.authorizeRequests().antMatchers("/tsh/login","/tsh/Signup").permitAll()
-		.anyRequest().authenticated()
-		.and().sessionManagement()
-		.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+		http.csrf().disable().authorizeRequests()
+				.antMatchers("/tsh/login", "/tsh/Signup", "/v3", "/swagger-ui/", "/swagger-ui/**",
+						"/swagger-ui/index.html", "/swagger-ui.html", "/swagger-ui", "/actuator/**",
+						"/swagger-resources")
+				.permitAll().anyRequest().authenticated().and().sessionManagement()
+				.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 		http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 	}
 

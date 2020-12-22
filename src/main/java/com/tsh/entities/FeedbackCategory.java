@@ -23,6 +23,7 @@ public class FeedbackCategory extends BaseEntity {
 	private String description;
 	private boolean active;
 	private int order;
+	private int grade;
 
 	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	private List<Feedback> feedbacks;
@@ -76,6 +77,14 @@ public class FeedbackCategory extends BaseEntity {
 
 	public void setOrder(int order) {
 		this.order = order;
+	}
+
+	public int getGrade() {
+		return grade;
+	}
+
+	public void setGrade(int grade) {
+		this.grade = grade;
 	}
 
 }

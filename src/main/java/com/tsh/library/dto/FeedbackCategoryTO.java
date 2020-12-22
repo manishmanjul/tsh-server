@@ -3,18 +3,18 @@ package com.tsh.library.dto;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FeedbackCategoryTO implements Comparable<FeedbackCategoryTO>{
+public class FeedbackCategoryTO implements Comparable<FeedbackCategoryTO> {
 
 	private int id;
-	
+
 	private int category;
 	private String description;
 	private boolean active;
 	private String teachersComment;
 	private int order;
-	
+	private int grade;
 	private List<FeedbackTO> feedbacks;
-	
+
 	public boolean isActive() {
 		return active;
 	}
@@ -23,7 +23,8 @@ public class FeedbackCategoryTO implements Comparable<FeedbackCategoryTO>{
 		this.active = active;
 	}
 
-	public FeedbackCategoryTO() {}
+	public FeedbackCategoryTO() {
+	}
 
 	public int getId() {
 		return id;
@@ -56,10 +57,11 @@ public class FeedbackCategoryTO implements Comparable<FeedbackCategoryTO>{
 	public void setFeedbacks(List<FeedbackTO> feedbacks) {
 		this.feedbacks = feedbacks;
 	}
+
 	public void addFedback(FeedbackTO feedback) {
-		if(feedbacks == null)
+		if (feedbacks == null)
 			feedbacks = new ArrayList<>();
-		
+
 		feedbacks.add(feedback);
 	}
 
@@ -77,6 +79,14 @@ public class FeedbackCategoryTO implements Comparable<FeedbackCategoryTO>{
 
 	public void setOrder(int order) {
 		this.order = order;
+	}
+
+	public int getGrade() {
+		return grade;
+	}
+
+	public void setGrade(int grade) {
+		this.grade = grade;
 	}
 
 	@Override

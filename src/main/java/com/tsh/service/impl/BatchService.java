@@ -142,7 +142,7 @@ public class BatchService implements IBatchService {
 		schedule.setTeacherName(batchDetails.getTeacher().getTeacherName());
 		schedule.setTerm("4");
 		schedule.setAttendies(fetchAllStudentsData(batchDetails));
-		schedule.setTopics(fetchAllTopicsForCourse(batchDetails));
+//		schedule.setTopics(fetchAllTopicsForCourse(batchDetails));
 		schedule.setCurrentTopic(getCurrentTopicOfBatch(batchDetails));
 		schedule.setNextTopic(getNextTopicOfBatch(batchDetails));
 
@@ -225,7 +225,7 @@ public class BatchService implements IBatchService {
 		return nextTopic;
 	}
 
-	private List<TopicsTO> fetchAllTopicsForCourse(BatchDetails batch) {
+	public List<TopicsTO> getBAtchTopics(BatchDetails batch) {
 		logger.info("Fetching all topics for the course :" + batch.getCourse().getDescription() + " Grade : "
 				+ batch.getGrade().getGrade());
 		List<TopicsTO> topicList = new ArrayList<>();
