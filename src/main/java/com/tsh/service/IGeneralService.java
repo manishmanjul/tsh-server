@@ -13,9 +13,11 @@ import com.tsh.entities.TimeSlot;
 import com.tsh.entities.TrainingType;
 import com.tsh.entities.Week;
 import com.tsh.exception.TSHException;
+import com.tsh.library.dto.CourseTO;
 import com.tsh.library.dto.GradeTO;
 import com.tsh.library.dto.TermTO;
 import com.tsh.library.dto.TopicManagerCourse;
+import com.tsh.library.dto.WeekTO;
 
 @Service
 public interface IGeneralService {
@@ -36,6 +38,8 @@ public interface IGeneralService {
 	 ********************************/
 	List<Week> getAllWeekRange(int start, int end);
 
+	List<WeekTO> getAllWeekRangeAsTO(int start, int end);
+
 	Week getWeekByWeekNumber(int weekNumber);
 
 	/********************************
@@ -51,6 +55,8 @@ public interface IGeneralService {
 	 * Course related Service *
 	 ********************************/
 	List<Course> findAllCourse();
+
+	List<CourseTO> findAllCourseAsTO();
 
 	Course getCourse(int id) throws TSHException;
 

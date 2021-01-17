@@ -7,6 +7,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.tsh.exception.TSHException;
 import com.tsh.library.TopicCompartor;
+import com.tsh.library.dto.CreateTopicRequest;
 import com.tsh.library.dto.ResponseMessage;
 import com.tsh.library.dto.TopicGenerationRequest;
 import com.tsh.library.dto.TopicManagerResponse;
@@ -45,6 +48,8 @@ public class TopicManager {
 		response.setTerms(generalService.findAllTermsAsTO());
 		response.setGrades(generalService.findAllGradesAsTO());
 		response.setCourse(generalService.findAllCourseTypes());
+		response.setrCourse(generalService.findAllCourseAsTO());
+		response.setWeek(generalService.getAllWeekRangeAsTO(1, 12));
 		return response;
 	}
 
@@ -87,4 +92,16 @@ public class TopicManager {
 		return topicList;
 	}
 
+	@PostMapping("/createTopic")
+	public ResponseEntity<String> createTopics(@RequestBody CreateTopicRequest topicRequest) {
+		logger.info("Creating {} new topics.", topicRequest.getTopicRequest().size());
+		ResponseEntity<String> response = null;
+		topicService.createAllTopics(topicRequest.getTopicRequest());
+
+		HttpHeaders header = new HttpHeaders();
+		header.set("statusCode", "200");
+		header.set("message", "Success");
+		response = new ResponseEntity<>("Topics created successdfully", header, HttpStatus.ACCEPTED);
+		return response;
+	}
 }

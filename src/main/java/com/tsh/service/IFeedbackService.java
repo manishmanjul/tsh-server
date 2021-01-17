@@ -14,6 +14,8 @@ import com.tsh.entities.Teacher;
 import com.tsh.entities.Topics;
 import com.tsh.exception.TSHException;
 import com.tsh.library.dto.DeleteFeedbackRequest;
+import com.tsh.library.dto.FeedbackCategoryTO;
+import com.tsh.library.dto.FeedbackTO;
 import com.tsh.library.dto.StudentFeedbackRequestTO;
 import com.tsh.library.dto.TopicsTO;
 
@@ -47,5 +49,15 @@ public interface IFeedbackService {
 	public List<TopicsTO> populateAllFeedbacksWithProviders(List<TopicsTO> topicTOList, StudentBatches studentBatches);
 
 	public void deleteFeedback(DeleteFeedbackRequest request);
+
+	public FeedbackCategoryTO addFeedbackCategory(FeedbackCategoryTO categoryTO);
+
+	public FeedbackCategoryTO findFeedbackCategoryById(int id);
+
+	public FeedbackCategoryTO toggleFeedbackCategoryState(FeedbackCategoryTO category) throws TSHException;
+
+	public FeedbackTO toggleFeedbackItemState(FeedbackTO feedback) throws TSHException;
+
+	public FeedbackTO addFeedbackItem(FeedbackTO feedbackTO) throws TSHException;
 
 }

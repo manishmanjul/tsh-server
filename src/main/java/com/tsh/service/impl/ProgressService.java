@@ -1,5 +1,6 @@
 package com.tsh.service.impl;
 
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,7 +57,7 @@ public class ProgressService implements IProgressService {
 
 	@Override
 	public List<BatchProgress> getAllBatchProgress(BatchDetails batch) {
-		return batchProgressRepo.findAllByBatchDetails(batch);
+		return batchProgressRepo.findAllUniqueBatchProgressWithLastStatus(batch.getId());
 	}
 
 	@Override
@@ -81,62 +82,36 @@ public class ProgressService implements IProgressService {
 
 		Topics topic = topicService.getTopicById(inputData.getTodaysTopicId());
 		if (topic == null)
-			throw new TSHException("Noi Course found with Id : " + inputData.getCourseId());
+			throw new TSHException("No Course found with Id : " + inputData.getCourseId());
 
-		// Find a batch progress record for this batchDetails id where course, topic
-		// matches and also the status should not be completed
+		// Find an existing BatchProgress for today or the date of this batch's usual
+		// class.
+		// If a feedback is being entered randomly then do not populate the planned or
+		// start date.
 		logger.info("Checking for existing open batch Progress for BatchDetails : {}", batchDetails.getBatchName());
-		BatchProgress batchProgress = batchProgressRepo.findByBatchDetailsAndTopicAndCourseAndStatusNot(batchDetails,
-				topic, course, completed);
+		BatchProgress batchProgress = batchProgressRepo.findByBatchDetailsAndPlannedStartDate(batchDetails,
+				TshUtil.formatOz(TshUtil.getCurrentDate()));
 
-		// If a batch progress is found. update this record or else create a new Batch
-		// Progress.
-		// If the next topic ID if the same as current. It means this batch progress
-		// remain in progress else mark completed.
-		if (batchProgress != null) {
-			logger.info("Found an existing batch progress for this batch. startDate : {}, Status : {}",
-					batchProgress.getStartDate(), batchProgress.getStatus().getStatus());
-			if (batchProgress.getStartDate() == null)
-				batchProgress.setStartDate(TshUtil.getCurrentDate());
-
-			if (batchProgress.getTopic().getId() == inputData.getNextTopicId()) {
-				logger.info("Setting the batchProgress to In Progress as the next topic and current topic is same");
-				batchProgress.setStatus(inProgress);
-				if (inputData.isPrintBooklet())
-					batchProgress.printBooklet();
-				else
-					batchProgress.dontPrintBooklet();
-			} else {
-				logger.info("Setting the batchProgress for this topic to Completed");
-				batchProgress.setEndDate(TshUtil.getCurrentDate());
-				batchProgress.dontPrintBooklet();
-				batchProgress.setStatus(completed);
-			}
-
-			logger.info("Updated the existing batch progress. Status : {}", batchProgress.getStatus().getStatus());
-		} else {
-			logger.info("No existing batch Progress found for this topic : {}", topic.getDescription());
-			logger.info("Creating new Batch Progress...");
+		if (batchProgress == null) {
 			batchProgress = new BatchProgress();
 			batchProgress.setBatchDetails(batchDetails);
-			batchProgress.setTopic(topic);
-			batchProgress.setCourse(course);
+		}
+
+		if (batchDetails.isCLassToday() || batchProgress != null) {
 			batchProgress.setStartDate(TshUtil.getCurrentDate());
-			batchProgress.setPlannedStartDate(TshUtil.getCurrentDate());
+			batchProgress.setCanceled(false);
+		}
 
-			if (inputData.isPrintBooklet())
-				batchProgress.printBooklet();
-			else
-				batchProgress.dontPrintBooklet();
+		batchProgress.setTeacher(batchDetails.getTeacher());
+		batchProgress.setTopic(topic);
+		batchProgress.setCourse(course);
 
-			if (batchProgress.getTopic().getId() == inputData.getNextTopicId()) {
-				logger.info("Setting the batchProgress to In Progress as the next topic and current topic is same");
-				batchProgress.setStatus(inProgress);
-			} else {
-				logger.info("Setting the batchProgress for this topic to Completed");
-				batchProgress.setEndDate(TshUtil.getCurrentDate());
-				batchProgress.setStatus(completed);
-			}
+		if (batchProgress.getTopic().getId() == inputData.getNextTopicId()) {
+			logger.info("Setting the batchProgress to In Progress as the next topic and current topic is same");
+			batchProgress.setStatus(inProgress);
+		} else {
+			logger.info("Setting the batchProgress for this topic to Completed");
+			batchProgress.setStatus(completed);
 		}
 
 		return batchProgress;
@@ -146,23 +121,15 @@ public class ProgressService implements IProgressService {
 	public BatchProgress manageNextBatchProgress(BatchDetails batchDetails, StudentFeedbackRequestTO inputData)
 			throws TSHException {
 
-		logger.info("Evaluating need for new next batch progress");
-		// If the current topic is same as next topic, then the BatchProgress for
-		// current topic is already in progress.
-		// No need to create another batch progress for the same topic
-		if (inputData.getTodaysTopicId() == inputData.getNextTopicId()) {
-			logger.info("The current topic and next topic is same. New batch progress creation will be skipped.");
-			return null;
-		}
-
 		TopicStatus planned = topicService.getTopicStatusByStatus("Planned");
-		TopicStatus completed = topicService.getTopicStatusByStatus("Completed");
 		Course course = generalService.getCourse(inputData.getCourseId());
 		Topics topic = topicService.getTopicById(inputData.getNextTopicId());
 		if (topic == null)
 			throw new TSHException("No Course found with Id : " + inputData.getCourseId());
-		BatchProgress batchProgress = batchProgressRepo.findByBatchDetailsAndTopicAndCourseAndStatusNot(batchDetails,
-				topic, course, completed);
+
+		Date nextClass = TshUtil.nextClass(batchDetails.getBatch().getTimeSlot());
+
+		BatchProgress batchProgress = batchProgressRepo.findByBatchDetailsAndPlannedStartDate(batchDetails, nextClass);
 
 		if (batchProgress == null) {
 			logger.info("Creating new Batch Progress for batchDetails : {}, Topic : {}", batchDetails.getBatchName(),
@@ -176,6 +143,7 @@ public class ProgressService implements IProgressService {
 		batchProgress.setBatchDetails(batchDetails);
 		batchProgress.setTopic(topic);
 		batchProgress.setCourse(course);
+		batchProgress.setTeacher(batchDetails.getTeacher());
 		if (batchProgress.getPlannedStartDate() == null)
 			batchProgress.setPlannedStartDate(TshUtil.nextClass(batchDetails.getBatch().getTimeSlot()));
 		batchProgress.setStatus(planned);
@@ -313,4 +281,27 @@ public class ProgressService implements IProgressService {
 		return topicTOList;
 	}
 
+	public BatchProgress getBatchProgressAsOfToday(BatchDetails batch) throws TSHException {
+		return batchProgressRepo.findByBatchDetailsAndPlannedStartDate(batch,
+				TshUtil.formatOz(TshUtil.getCurrentDate()));
+	}
+
+	@Override
+	public BatchProgress getNextPlannedBatchProgress(BatchDetails batch) throws TSHException {
+		List<BatchProgress> progressList = batchProgressRepo
+				.findByBatchDetailsAndPlannedStartDateGreaterThanOrderByPlannedStartDate(batch,
+						TshUtil.formatOz(TshUtil.getCurrentDate()));
+
+		if (progressList.isEmpty()) {
+			return null;
+		} else {
+			return progressList.get(0);
+		}
+	}
+
+	@Override
+	public void saveAllBatchProgress(List<BatchProgress> batches) {
+		batchProgressRepo.saveAll(batches);
+
+	}
 }

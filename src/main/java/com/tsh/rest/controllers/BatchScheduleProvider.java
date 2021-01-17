@@ -11,7 +11,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,7 +25,6 @@ import com.tsh.library.dto.UserPrinciple;
 import com.tsh.service.IBatchService;
 import com.tsh.service.ITeacherService;
 
-@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/tsh/schedule")
 public class BatchScheduleProvider {
@@ -69,7 +67,7 @@ public class BatchScheduleProvider {
 			header.set("statusCode", "200");
 			header.set("message", "Success");
 			response = new ResponseEntity<>(topics, header, HttpStatus.ACCEPTED);
-			
+
 		} catch (NumberFormatException e) {
 			HttpHeaders header = new HttpHeaders();
 			header.set("statusCode", "305");

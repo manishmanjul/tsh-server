@@ -13,6 +13,7 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.tsh.entities.Course;
@@ -22,10 +23,12 @@ import com.tsh.entities.TimeSlot;
 import com.tsh.entities.TrainingType;
 import com.tsh.entities.Week;
 import com.tsh.exception.TSHException;
+import com.tsh.library.dto.CourseTO;
 import com.tsh.library.dto.GradeTO;
 import com.tsh.library.dto.TermTO;
 import com.tsh.library.dto.TopicManagerCourse;
 import com.tsh.library.dto.TopicManagerSubject;
+import com.tsh.library.dto.WeekTO;
 import com.tsh.repositories.CourseRepository;
 import com.tsh.repositories.GradesRepository;
 import com.tsh.repositories.TermRepository;
@@ -67,6 +70,7 @@ public class GeneralService implements IGeneralService {
 		return weekRepo.findByWeekNumber(weekNumber).get(0);
 	}
 
+	@Cacheable("TshCache")
 	@Override
 	public List<Term> findAllTerms() {
 		return termRepo.findAll();
@@ -77,11 +81,13 @@ public class GeneralService implements IGeneralService {
 		return weekRepo.findByWeekNumberBetweenOrderByWeekNumber(start, end);
 	}
 
+	@Cacheable("TshCache")
 	@Override
 	public List<Grades> findAllGrades() {
 		return gradeRepo.findAll();
 	}
 
+	@Cacheable("TshCache")
 	@Override
 	public List<Course> findAllCourse() {
 		return courseRepo.findAll();
@@ -140,6 +146,7 @@ public class GeneralService implements IGeneralService {
 				.findFirst();
 	}
 
+	@Cacheable("TshCache")
 	@Override
 	public List<TrainingType> findAllTrainingTypes() {
 		return trainingTypeRepo.findAll();
@@ -240,6 +247,33 @@ public class GeneralService implements IGeneralService {
 		}
 		logger.info("{} - courses fetched.", courseTypes.size());
 		return courseCatList;
+	}
+
+	@Override
+	public List<WeekTO> getAllWeekRangeAsTO(int start, int end) {
+		List<Week> weeks = getAllWeekRange(start, end);
+		ModelMapper mapper = new ModelMapper();
+
+		List<WeekTO> weeksTO = weeks.stream().map(w -> {
+			WeekTO weekTO = mapper.map(w, WeekTO.class);
+			return weekTO;
+		}).collect(Collectors.toList());
+
+		logger.info("{} weeks fetched", weeksTO.size());
+		return weeksTO;
+	}
+
+	@Override
+	public List<CourseTO> findAllCourseAsTO() {
+		ModelMapper mapper = new ModelMapper();
+		List<Course> courseList = findAllCourse();
+		List<CourseTO> courseListTO = courseList.stream().map(c -> {
+			CourseTO courseTO = mapper.map(c, CourseTO.class);
+			return courseTO;
+		}).collect(Collectors.toList());
+
+		logger.info("{} courses fetched", courseListTO.size());
+		return courseListTO;
 	}
 
 }

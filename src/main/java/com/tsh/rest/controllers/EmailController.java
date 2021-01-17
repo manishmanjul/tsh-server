@@ -7,7 +7,6 @@ import javax.mail.MessagingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +17,6 @@ import com.tsh.library.dto.HTMLElementRequest;
 import com.tsh.library.dto.ResponseMessage;
 import com.tsh.service.IEmailService;
 
-@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/tsh/mail")
 public class EmailController {
@@ -29,7 +27,7 @@ public class EmailController {
 
 	@PostMapping("/send")
 	public ResponseMessage emailFeedbackToParent(@RequestBody HTMLElementRequest element) {
-		logger.info("HTML ELement : {}", element.getElement());
+		logger.info("Sending feednack ");
 		ResponseMessage response = null;
 
 		try {

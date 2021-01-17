@@ -6,7 +6,6 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,17 +19,16 @@ import com.tsh.library.dto.ResponseMessage;
 import com.tsh.library.dto.ResponseWithMap;
 import com.tsh.service.IDataImportService;
 
-@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/tsh/import")
 public class DataImportController {
-	
+
 	@Autowired
 	private IDataImportService importService;
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
-	
+
 	@GetMapping("/outlook")
-	public String importData(){
+	public String importData() {
 		logger.info("Request to import data from external source recieved by Data Import Controller");
 		String result = "Success from import outlook";
 		/*
@@ -39,10 +37,10 @@ public class DataImportController {
 		 */
 		return result;
 	}
-	
-	@CrossOrigin(origins = "http://localhost:3000")
+
 	@PostMapping("/file")
-	public ResponseWithMap<Topics> importFile(@RequestParam("file") MultipartFile file, @RequestParam("command") String command) {
+	public ResponseWithMap<Topics> importFile(@RequestParam("file") MultipartFile file,
+			@RequestParam("command") String command) {
 		Map<String, List<Topics>> returnData = null;
 		logger.info("Request to import a file with command : {}, recieved.", command);
 		ResponseMessage response = null;

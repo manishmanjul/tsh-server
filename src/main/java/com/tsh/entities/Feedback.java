@@ -10,7 +10,11 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 @Entity
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @Table(name = "feedback")
 public class Feedback extends BaseEntity {
 
@@ -55,6 +59,30 @@ public class Feedback extends BaseEntity {
 
 	public boolean isActive() {
 		return active;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public void setShortDescription(String shortDescription) {
+		this.shortDescription = shortDescription;
+	}
+
+	public void setCategory(FeedbackCategory category) {
+		this.category = category;
+	}
+
+	public void setCriteria(String criteria) {
+		this.criteria = criteria;
+	}
+
+	public void setActive(boolean active) {
+		this.active = active;
 	}
 
 	@Override

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.tsh.entities.Features;
 import com.tsh.entities.Role;
 import com.tsh.entities.User;
+import com.tsh.library.dto.FeaturesTO;
 
 @Service
 public interface ILoginService extends UserDetailsService {
@@ -21,4 +22,6 @@ public interface ILoginService extends UserDetailsService {
 	public boolean isExistingUser(User newUser);
 
 	public boolean isUserNameExist(String userName);
+
+	public List<FeaturesTO> findAllFeaturesByRoleAndContainerPage(Role role, String pageName);
 }

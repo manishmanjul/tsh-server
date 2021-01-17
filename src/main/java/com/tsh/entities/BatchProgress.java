@@ -1,5 +1,6 @@
 package com.tsh.entities;
 
+import java.sql.Time;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -12,7 +13,11 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 @Entity
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @Table(name = "batch_progress")
 public class BatchProgress {
 
@@ -32,6 +37,10 @@ public class BatchProgress {
 	@JoinColumn(name = "course_id")
 	private Course course;
 
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "teacher_id")
+	private Teacher teacher;
+
 	@Column(name = "startdate")
 	private Date startDate;
 
@@ -50,6 +59,12 @@ public class BatchProgress {
 
 	@Column(name = "print_booklet")
 	private boolean printBooklet;
+
+	@Column(name = "planned_time")
+	private Time plannedTime;
+
+	@Column(name = "canceled")
+	private boolean canceled = false;
 
 	public int getId() {
 		return id;
@@ -145,6 +160,30 @@ public class BatchProgress {
 
 	public void dontPrintBooklet() {
 		this.printBooklet = false;
+	}
+
+	public Teacher getTeacher() {
+		return teacher;
+	}
+
+	public void setTeacher(Teacher teacher) {
+		this.teacher = teacher;
+	}
+
+	public Time getPlannedTime() {
+		return plannedTime;
+	}
+
+	public void setPlannedTime(Time plannedTime) {
+		this.plannedTime = plannedTime;
+	}
+
+	public boolean isCanceled() {
+		return canceled;
+	}
+
+	public void setCanceled(boolean canceled) {
+		this.canceled = canceled;
 	}
 
 	@Override

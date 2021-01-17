@@ -7,7 +7,9 @@ import org.springframework.stereotype.Repository;
 
 import com.tsh.entities.Course;
 import com.tsh.entities.Grades;
+import com.tsh.entities.Term;
 import com.tsh.entities.Topics;
+import com.tsh.entities.Week;
 
 @Repository
 public interface TopicsRepository extends JpaRepository<Topics, Integer> {
@@ -17,4 +19,7 @@ public interface TopicsRepository extends JpaRepository<Topics, Integer> {
 	public List<Topics> findAllByCourseAndGradeAndActive(Course course, Grades grade, boolean active);
 
 	public List<Topics> findAllByActiveOrderByGradeId(boolean active);
+
+	public Topics findByGradeAndCourseAndTermAndWeekAndActive(Grades grade, Course course, Term term, Week week,
+			boolean active);
 }

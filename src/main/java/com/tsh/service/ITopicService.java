@@ -8,9 +8,11 @@ import org.springframework.stereotype.Service;
 import com.tsh.entities.BatchDetails;
 import com.tsh.entities.Course;
 import com.tsh.entities.Grades;
+import com.tsh.entities.Term;
 import com.tsh.entities.TopicProgress;
 import com.tsh.entities.TopicStatus;
 import com.tsh.entities.Topics;
+import com.tsh.entities.Week;
 import com.tsh.exception.TSHException;
 import com.tsh.library.dto.TopicGenerationRequest;
 import com.tsh.library.dto.TopicRequest;
@@ -29,6 +31,8 @@ public interface ITopicService extends TshService {
 
 	List<Topics> saveAllTopics(List<Topics> topicList);
 
+	void createAllTopics(List<TopicRequest> topicList);
+
 	TopicStatus getTopicStatusByStatus(String status);
 
 	List<TopicProgress> saveAllTopicProgress(List<TopicProgress> progressList);
@@ -42,5 +46,7 @@ public interface ITopicService extends TshService {
 	public List<Topics> getAllActiveTopics();
 
 	public List<TopicResponse> getAllActiveTopicsAsTO();
+
+	public Topics getForGradeCourseTermAndWeek(Grades grade, Course course, Term term, Week week);
 
 }

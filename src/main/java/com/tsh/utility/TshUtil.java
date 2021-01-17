@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import com.tsh.entities.TimeSlot;
 import com.tsh.exception.TSHException;
@@ -90,6 +91,32 @@ public class TshUtil {
 		return today;
 	}
 
+	public static Date getYesterdayDate() throws TSHException {
+		DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.ENGLISH);
+		Calendar cal = Calendar.getInstance();
+		cal.add(Calendar.DATE, -1);
+		Date yesterday = cal.getTime();
+		try {
+			yesterday = formatter.parse(formatter.format(yesterday));
+		} catch (ParseException e) {
+			throw new TSHException(e.getMessage());
+		}
+		return yesterday;
+	}
+
+	public static Date getTomorrowsDate() throws TSHException {
+		DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.ENGLISH);
+		Calendar cal = Calendar.getInstance();
+		cal.add(Calendar.DATE, 1);
+		Date tomorrow = cal.getTime();
+		try {
+			tomorrow = formatter.parse(formatter.format(tomorrow));
+		} catch (ParseException e) {
+			throw new TSHException(e.getMessage());
+		}
+		return tomorrow;
+	}
+
 	public static Date nextWeek() throws TSHException {
 		DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
 		Calendar today = Calendar.getInstance();
@@ -148,8 +175,33 @@ public class TshUtil {
 		return today.get(Calendar.DAY_OF_WEEK);
 	}
 
+	public static int getWeekNUmberPost(Date date) {
+		Date today = null;
+		try {
+			today = getCurrentDate();
+		} catch (TSHException e) {
+			e.printStackTrace();
+		}
+		long diff = today.getTime() - date.getTime();
+		long days = TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+		int weekNumber = new Long(days / 7).intValue();
+		return weekNumber;
+	}
+
 	public static Date format(Date input) throws TSHException {
 		DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
+		Date returnDate = null;
+
+		try {
+			returnDate = formatter.parse(formatter.format(input));
+		} catch (ParseException e) {
+			throw new TSHException(e.getMessage());
+		}
+		return returnDate;
+	}
+
+	public static Date formatOz(Date input) throws TSHException {
+		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
 		Date returnDate = null;
 
 		try {
@@ -170,4 +222,5 @@ public class TshUtil {
 
 		return statusMap.get("" + status);
 	}
+
 }

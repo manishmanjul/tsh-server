@@ -42,4 +42,6 @@ public interface IBatchService extends TshService {
 
 	BatchDetails getBatchDetailsById(int id) throws TSHException;
 
+	public List<BatchDetails> getAllBatchDetailsForToday();
+
 }

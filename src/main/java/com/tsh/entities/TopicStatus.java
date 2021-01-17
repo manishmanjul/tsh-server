@@ -6,9 +6,13 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 @Entity
-@Table(name="topic_status")
-public class TopicStatus extends BaseEntity{
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+@Table(name = "topic_status")
+public class TopicStatus extends BaseEntity {
 
 	public static final String NOT_STARTED = "Not Started";
 	public static final String PLANNED = "Planned";
@@ -16,14 +20,15 @@ public class TopicStatus extends BaseEntity{
 	public static final String COMPLETED = "Completed";
 	public static final String RESTARTED = "Restarted";
 	public static final String ON_HOLD = "On Hold";
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
+
 	private String status;
-	
-	public TopicStatus() {}
+
+	public TopicStatus() {
+	}
 
 	public int getId() {
 		return id;

@@ -23,7 +23,13 @@ public interface IProgressService extends TshService {
 
 	public List<BatchProgress> getAllBatchProgress(BatchDetails batch);
 
+	public BatchProgress getBatchProgressAsOfToday(BatchDetails batch) throws TSHException;
+
+	public BatchProgress getNextPlannedBatchProgress(BatchDetails batch) throws TSHException;
+
 	public BatchProgress addBatchProgress(BatchProgress batchProgress) throws TSHException;
+
+	public void saveAllBatchProgress(List<BatchProgress> batches);
 
 	public BatchProgress manageCurrentBatchProgress(BatchDetails batchDetails, StudentFeedbackRequestTO inputData)
 			throws TSHException;

@@ -3,15 +3,17 @@ package com.tsh.library.dto;
 public class FeedbackTO {
 
 	private int id;
-	
+
 	private String description;
-	
+
 	private String shortDescription;
-	
+
 	private String criteria;
 	private boolean active;
-	
-	public FeedbackTO() {}
+	private int category;
+
+	public FeedbackTO() {
+	}
 
 	public int getId() {
 		return id;
@@ -51,6 +53,14 @@ public class FeedbackTO {
 
 	public void setActive(boolean active) {
 		this.active = active;
+	}
+
+	public int getCategory() {
+		return category;
+	}
+
+	public void setCategory(int category) {
+		this.category = category;
 	}
 
 }

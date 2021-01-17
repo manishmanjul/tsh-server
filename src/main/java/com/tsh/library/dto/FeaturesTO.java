@@ -2,7 +2,7 @@ package com.tsh.library.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class FeaturesTO{
+public class FeaturesTO {
 
 	private String key;
 	private String name;
@@ -12,6 +12,8 @@ public class FeaturesTO{
 	private int order;
 	private FeatureTypeTO featureType;
 	private String description;
+	private String page;
+	private String title;
 
 	public String getName() {
 		return name;
@@ -78,10 +80,25 @@ public class FeaturesTO{
 		this.key = key;
 	}
 
+	public String getPage() {
+		return page;
+	}
+
+	public void setPage(String page) {
+		this.page = page;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
 	@Override
 	public String toString() {
-		return "Features [name=" + name + ", permission=" + permission + ", target=" + target
-				+ ", style=" + style + ", order=" + order + ", featureType=" + featureType + ", description="
-				+ description + "]";
+		return "Features [name=" + name + ", permission=" + permission + ", target=" + target + ", style=" + style
+				+ ", order=" + order + ", featureType=" + featureType + ", description=" + description + "]";
 	}
 }

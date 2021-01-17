@@ -9,7 +9,9 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.tsh.entities.BatchDetails;
 import com.tsh.entities.BatchProgress;
+import com.tsh.entities.Feedback;
 import com.tsh.entities.FeedbackCategory;
 import com.tsh.entities.Student;
 import com.tsh.entities.StudentBatches;
@@ -37,7 +40,6 @@ import com.tsh.service.IFeedbackService;
 import com.tsh.service.IProgressService;
 import com.tsh.service.IStudentService;
 
-@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/tsh/feedback")
 public class FeedbackController {
@@ -68,8 +70,16 @@ public class FeedbackController {
 		logger.info("{} feedback categories fetched.", categories.size());
 		categoriesTO = categories.stream().map(cat -> {
 			FeedbackCategoryTO catTO = mapper.map(cat, FeedbackCategoryTO.class);
-			List<FeedbackTO> feedbackList = cat.getFeedbacks().stream().map(f -> mapper.map(f, FeedbackTO.class))
-					.collect(Collectors.toList());
+			List<FeedbackTO> feedbackList = new ArrayList<>();
+			for (Feedback f : cat.getFeedbacks()) {
+				if (active) {
+					if (!f.isActive())
+						continue;
+				}
+				FeedbackTO fTO = mapper.map(f, FeedbackTO.class);
+				feedbackList.add(fTO);
+			}
+
 			catTO.setFeedbacks(feedbackList);
 			return catTO;
 		}).collect(Collectors.toList());
@@ -89,20 +99,12 @@ public class FeedbackController {
 
 		logger.info("Updating Batch progress for batch {} - {}", batchDetails.getBatchName(), batchDetails.getCourse());
 		try {
-			BatchProgress batchProgress = progressService.manageCurrentBatchProgress(batchDetails, studentFeedback); // Manage
-																														// Batch
-																														// Progress
-																														// for
-																														// CURRENT
-																														// Topic
+			// Manage Batch Progress for CURRENT Topic
+			BatchProgress batchProgress = progressService.manageCurrentBatchProgress(batchDetails, studentFeedback);
 			batchProgress = progressService.addBatchProgress(batchProgress);
 
-			BatchProgress nextBatch = progressService.manageNextBatchProgress(batchDetails, studentFeedback); // Manage
-																												// Batch
-																												// Progress
-																												// for
-																												// NEXT
-																												// Topic
+			// Manage Batch Progress for NEXT Topic
+			BatchProgress nextBatch = progressService.manageNextBatchProgress(batchDetails, studentFeedback);
 			if (nextBatch != null) {
 				logger.info("Saving next Batch progress.");
 				progressService.addBatchProgress(nextBatch);
@@ -171,6 +173,113 @@ public class FeedbackController {
 		} catch (Exception e) {
 			response = ResponseMessage.GENERAL_FAIL.appendMessage(e.getLocalizedMessage());
 		}
+		return response;
+	}
+
+	@PostMapping("/category/addCategory")
+	public ResponseEntity<String> addFeedbackCategory(@RequestBody FeedbackCategoryTO category) {
+		logger.info("Adding new Feedback Category : {}", category.getDescription());
+		category = feedbackService.addFeedbackCategory(category);
+		ResponseEntity<String> response = null;
+		if (category == null) {
+			HttpHeaders headers = new HttpHeaders();
+			headers.set("statusCode", "201");
+			headers.set("message", "Internal Server Error. Could not add Category.");
+			response = new ResponseEntity<>("Internal Server Error. Could not add Category.", headers,
+					HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.warn("Unable to add Category to db. Check logs for errors.");
+
+		} else {
+			HttpHeaders headers = new HttpHeaders();
+			headers.set("statusCode", "504");
+			headers.set("message", "Category " + category.getDescription() + " addedd successfully");
+			response = new ResponseEntity<>("Category " + category.getDescription() + " addedd successfully", headers,
+					HttpStatus.ACCEPTED);
+			logger.info("Successfully added " + category.getDescription() + " to the db");
+		}
+		return response;
+	}
+
+	@PostMapping("/addFeedback")
+	public ResponseEntity<String> addFeedbackItem(@RequestBody FeedbackTO feedbackRequest) {
+		ResponseEntity<String> response = null;
+		FeedbackTO savedObj = null;
+		logger.info("Adding new feedback item : {}", feedbackRequest.getDescription());
+		try {
+			savedObj = feedbackService.addFeedbackItem(feedbackRequest);
+		} catch (TSHException e) {
+			e.printStackTrace();
+			HttpHeaders headers = new HttpHeaders();
+			headers.set("statusCode", "201");
+			headers.set("message", "Internal Server Error. Could not add Feedback.");
+			response = new ResponseEntity<>(e.getMessage(), headers, HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.warn("Unable to add Feedback to db. Check logs for errors.");
+		}
+		if (savedObj == null) {
+			HttpHeaders headers = new HttpHeaders();
+			headers.set("statusCode", "201");
+			headers.set("message", "Internal Server Error. Could not add Feedback.");
+			response = new ResponseEntity<>("Internal Server Error. Could not add Feedback.", headers,
+					HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.warn("Unable to add Feedback to db. Check logs for errors.");
+		} else {
+			HttpHeaders headers = new HttpHeaders();
+			headers.set("statusCode", "504");
+			headers.set("message", "Feedback " + feedbackRequest.getDescription() + " addedd successfully");
+			response = new ResponseEntity<>("Feedback " + feedbackRequest.getDescription() + " addedd successfully",
+					headers, HttpStatus.ACCEPTED);
+			logger.info("Successfully added feedback : " + feedbackRequest.getDescription() + " to the db");
+		}
+
+		return response;
+	}
+
+	@PostMapping("/toggleFeedbackCategoryState")
+	public ResponseEntity<String> toggleFeedbackCategoryState(@RequestBody SimpleIDRequest fCategory) {
+		ResponseEntity<String> response = null;
+		logger.info("Changing active state of Feedback category {} ", fCategory.getId());
+		FeedbackCategoryTO fCategoryTO = feedbackService.findFeedbackCategoryById(fCategory.getId());
+		try {
+			feedbackService.toggleFeedbackCategoryState(fCategoryTO);
+			HttpHeaders header = new HttpHeaders();
+			header.set("statusCode", "200");
+			header.set("message", "Success");
+			response = new ResponseEntity<>("Feedback Category state changed", header, HttpStatus.ACCEPTED);
+		} catch (TSHException e) {
+			e.printStackTrace();
+			HttpHeaders headers = new HttpHeaders();
+			headers.set("statusCode", "201");
+			headers.set("message", "Internal Server Error. Could not change state FeedbackCategory.");
+			response = new ResponseEntity<>("Internal Server Error. Could not change state FeedbackCategory.", headers,
+					HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.warn("Unable to change state of Feedback Category. Check logs for errors.");
+		}
+		return response;
+	}
+
+	@PostMapping("/toggleFeedbackState")
+	public ResponseEntity<String> toggleFeedbackItemState(@RequestBody SimpleIDRequest feedback) {
+		ResponseEntity<String> response = null;
+		logger.info("Changing active state of Feedback Item {}", feedback.getId());
+		Feedback f = feedbackService.getFeedbackById(feedback.getId());
+		ModelMapper mapper = new ModelMapper();
+		FeedbackTO feedbackTO = mapper.map(f, FeedbackTO.class);
+		try {
+			feedbackService.toggleFeedbackItemState(feedbackTO);
+			HttpHeaders header = new HttpHeaders();
+			header.set("statusCode", "200");
+			header.set("message", "Success");
+			response = new ResponseEntity<>("Feedback state changed", header, HttpStatus.ACCEPTED);
+		} catch (TSHException e) {
+			e.printStackTrace();
+			HttpHeaders headers = new HttpHeaders();
+			headers.set("statusCode", "201");
+			headers.set("message", "Internal Server Error. Could not change state of Feedback.");
+			response = new ResponseEntity<>("Internal Server Error. Could not change state of Feedback.", headers,
+					HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.warn("Unable to change state of Feedback. Check logs for errors.");
+		}
+
 		return response;
 	}
 }

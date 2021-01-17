@@ -12,6 +12,7 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
@@ -122,10 +123,35 @@ public class BatchService implements IBatchService {
 		List<BatchDetails> batches = batchDetailRepo.findAllByTeacherAndActive(teacher, true);
 
 		for (BatchDetails batch : batches) {
-			schedules.add(getBatchDetails(batch));
+			BatchProgress batchProgress = progressService.getBatchProgressAsOfToday(batch);
+			if (batch.isCLassToday() && !isMyBatch(batch, batchProgress)) {
+				continue;
+			}
+
+			ScheduleTO sch = getBatchDetails(batch);
+			if (batchProgress != null) {
+				if (batchProgress.getPlannedTime() != null)
+					sch.setStartTime(batchProgress.getPlannedTime().toString());
+
+				if (batchProgress.getTeacher() != null)
+					sch.setTeacherName(batchProgress.getTeacher().getTeacherName());
+
+				if (batchProgress.isCanceled())
+					sch.cancelBatch();
+			}
+			schedules.add(sch);
 		}
 		logger.info("{} batches fetched. Returning result", schedules.size());
 		return schedules;
+	}
+
+	private boolean isMyBatch(BatchDetails batch, BatchProgress progress) {
+		if (progress == null)
+			return true;
+		if (progress.getTeacher() == batch.getTeacher())
+			return true;
+		else
+			return false;
 	}
 
 	@Override
@@ -149,6 +175,7 @@ public class BatchService implements IBatchService {
 		return schedule;
 	}
 
+	@Cacheable("TshCache")
 	private List<StudentTO> fetchAllStudentsData(BatchDetails batch) {
 		List<StudentBatches> students = studentService.getStudentBatches(batch);
 		List<StudentTO> studentList = new ArrayList<>();
@@ -225,15 +252,16 @@ public class BatchService implements IBatchService {
 		return nextTopic;
 	}
 
+	@Cacheable("TshCache")
 	public List<TopicsTO> getBAtchTopics(BatchDetails batch) {
 		logger.info("Fetching all topics for the course :" + batch.getCourse().getDescription() + " Grade : "
 				+ batch.getGrade().getGrade());
 		List<TopicsTO> topicList = new ArrayList<>();
 		ModelMapper mapper = new ModelMapper();
+		List<BatchProgress> batchProgress = progressService.getAllBatchProgress(batch);
 		topicList = topicService.getAllActiveTopicsForCourseAndGrade(batch.getCourse(), batch.getGrade()).stream()
 				.map(topic -> {
 					TopicsTO topicTO = mapper.map(topic, TopicsTO.class);
-					List<BatchProgress> batchProgress = progressService.getAllBatchProgress(batch);
 					BatchProgress progress = batchProgress.stream().filter(bp -> bp.getTopic().equals(topic))
 							.findFirst().orElse(null);
 					if (progress != null) {
@@ -260,6 +288,14 @@ public class BatchService implements IBatchService {
 	@Override
 	public BatchDetails getBatchDetailsById(int id) throws TSHException {
 		return batchDetailRepo.findById(id);
+	}
+
+	@Override
+	public List<BatchDetails> getAllBatchDetailsForToday() {
+		int weekDay = TshUtil.getTodaysWeekDay();
+		List<BatchDetails> batchDetails = batchDetailRepo.findAllBatchesForWeekday(weekDay);
+
+		return batchDetails;
 	}
 
 }

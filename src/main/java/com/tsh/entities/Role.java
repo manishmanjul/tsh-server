@@ -1,30 +1,33 @@
 package com.tsh.entities;
 
 import javax.persistence.Column;
-
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @Table(name = "roles")
-public class Role extends BaseEntity{
+public class Role extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@JsonIgnore
 	private int id;
-	
+
 	@Column(name = "role_name")
 	private String roleName;
 
 	@Column(name = "permission_string")
 	private String permissionString;
-	
+
 	public int getId() {
 		return id;
 	}
@@ -82,5 +85,5 @@ public class Role extends BaseEntity{
 			return false;
 		return true;
 	}
-	
+
 }

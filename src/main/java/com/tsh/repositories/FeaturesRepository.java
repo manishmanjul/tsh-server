@@ -10,9 +10,13 @@ import org.springframework.stereotype.Repository;
 import com.tsh.entities.Features;
 
 @Repository
-public interface FeaturesRepository extends JpaRepository<Features, Integer>{
+public interface FeaturesRepository extends JpaRepository<Features, Integer> {
 
-	@Query("Select f from Features f where f.permission Like CONCAT('', :permissionStr, '%') order by f.order")
+	@Query("Select f from Features f where f.permission Like CONCAT('', :permissionStr, '%') and f.page= 'all' order by f.order")
 	public List<Features> findByRole(@Param("permissionStr") String permissionStr);
-	
+
+	@Query("Select f from Features f where f.permission like CONCAT('', :permissionStr, '%') and f.page= :pageName order by f.order")
+	public List<Features> findByPermissionAndPage(@Param("permissionStr") String permissionStr,
+			@Param("pageName") String pageName);
+
 }

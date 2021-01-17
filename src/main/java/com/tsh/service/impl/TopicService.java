@@ -2,7 +2,6 @@ package com.tsh.service.impl;
 
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -10,6 +9,7 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.tsh.entities.BatchDetails;
@@ -34,7 +34,6 @@ import com.tsh.repositories.TopicsRepository;
 import com.tsh.service.IGeneralService;
 import com.tsh.service.IProgressService;
 import com.tsh.service.ITopicService;
-import com.tsh.utility.TshUtil;
 
 @Service
 public class TopicService implements ITopicService {
@@ -82,6 +81,7 @@ public class TopicService implements ITopicService {
 		return topicProgressRepo.saveAll(progressList);
 	}
 
+	@Cacheable("TshCache")
 	@Override
 	public List<Topics> getAllActiveTopicsForCourseAndGrade(Course course, Grades grade) {
 		return topicsRepo.findAllByCourseAndGradeAndActive(course, grade, true);
@@ -100,33 +100,15 @@ public class TopicService implements ITopicService {
 	public Topics getCurrentTopic(BatchDetails batchDetails) throws ParseException, TSHException {
 
 		Topics topicToReturn = null;
-		Calendar startOfWeek = Calendar.getInstance();
-		startOfWeek.setTime(TshUtil.getFirstDayOfCurrentWeek());
-		Calendar endOfWeek = Calendar.getInstance();
-		endOfWeek.setTime(TshUtil.getLastDayOfCurrentWeek());
 
+		BatchProgress batchProgress = progressService.getBatchProgressAsOfToday(batchDetails);
 		// If this batch class timing is not today. return an empty topic.
-		if (!batchDetails.isCLassToday()) {
-			topicToReturn = new Topics();
-			topicToReturn.setDescription("No Topic assigned for Today");
-			return topicToReturn;
+		if (batchProgress != null) {
+			topicToReturn = batchProgress.getTopic();
 		}
-
-		// Find if there is any Batch progress in In Progress status. Fetch the latest
-		// one.
-		topicToReturn = findInProgressTopic(batchDetails);
-
-		// By now we either have a topic from an in progress batch progress or the topic
-		// to return is still null;
-		// Either way, we check if there is anything planned. A batch progress that is
-		// planned will
-		// take precedence over in progress topic. So check if there is anything
-		// planned.
-		topicToReturn = findPlannedTopicBetween(batchDetails, startOfWeek, endOfWeek);
-
 		if (topicToReturn == null) {
 			topicToReturn = new Topics();
-			topicToReturn.setDescription("No Topic assigned for today");
+			topicToReturn.setDescription("No Topic assigned for Today");
 		}
 
 		return topicToReturn;
@@ -143,95 +125,46 @@ public class TopicService implements ITopicService {
 	public Topics getNextTopic(BatchDetails batchDetails) throws ParseException, TSHException {
 		Topics topicToReturn = null;
 
-		// If the class is not today then return topic that is in progress or planned
-		// for this week.
-		// Planned topic takes precedence over in progress.
-		// If class is today then apply the same logic but for next week.
-		if (!batchDetails.isCLassToday()) {
-			Calendar startOfWeek = Calendar.getInstance();
-			startOfWeek.setTime(TshUtil.getFirstDayOfCurrentWeek());
-			Calendar endOfWeek = Calendar.getInstance();
-			endOfWeek.setTime(TshUtil.getLastDayOfCurrentWeek());
-
-			// Find if there is any Batch progress in In Progress status. Fetch the latest
-			// one.
-			topicToReturn = findInProgressTopic(batchDetails);
-
-			// By now we either have a topic from an in progress batch progress or the topic
-			// to return is still null;
-			// Either way, we check if there is anything planned. A batch progress that is
-			// planned will
-			// take precedence over in progress topic. So check if there is anything
-			// planned.
-			topicToReturn = findPlannedTopicBetween(batchDetails, startOfWeek, endOfWeek);
-
-			// If nothing is planned for this week then may be today is a day after this
-			// weeks class.
-			// Example - the class was on Monday and today is Tuesday. In this case see if
-			// there is anything
-			// planned for next week
-
-			Calendar now = Calendar.getInstance();
-			now.add(Calendar.DATE, 7);
-
-			Calendar startOfNextWeek = Calendar.getInstance();
-			startOfNextWeek.setTime(TshUtil.getFirstDayOfWeek(now.getTime()));
-			Calendar endOfNextWeek = Calendar.getInstance();
-			endOfNextWeek.setTime(TshUtil.getLastDayOfWeek(now.getTime()));
-
-			topicToReturn = findPlannedTopicBetween(batchDetails, startOfNextWeek, endOfNextWeek);
-
-		} else {
-			Calendar now = Calendar.getInstance();
-			now.add(Calendar.DATE, 7);
-
-			Calendar startOfNextWeek = Calendar.getInstance();
-			startOfNextWeek.setTime(TshUtil.getFirstDayOfWeek(now.getTime()));
-			Calendar endOfNextWeek = Calendar.getInstance();
-			endOfNextWeek.setTime(TshUtil.getLastDayOfWeek(now.getTime()));
-
-			// Only the planned topic for next week. As the in progress topic would be
-			// started and updated today.
-			topicToReturn = findPlannedTopicBetween(batchDetails, startOfNextWeek, endOfNextWeek);
-		}
-
-		if (topicToReturn == null) {
+		BatchProgress progress = progressService.getNextPlannedBatchProgress(batchDetails);
+		if (progress != null)
+			topicToReturn = progress.getTopic();
+		else {
 			topicToReturn = new Topics();
-			topicToReturn.setDescription("No Topic planned for Next Class");
+			topicToReturn.setDescription("No Topic planned so far");
 		}
 
 		return topicToReturn;
 	}
 
-	private Topics findInProgressTopic(BatchDetails batchDetails) {
-		Topics topicToReturn = null;
-		TopicStatus inProgress = topicStatusRepo.findByStatus("In Progress");
-
-		List<BatchProgress> batchProgressList = progressService.getAllBatchProgressForStatus(batchDetails, inProgress);
-		if (batchProgressList.size() > 0) {
-			topicToReturn = batchProgressList.get(0).getTopic();
-		}
-
-		return topicToReturn;
-	}
-
-	private Topics findPlannedTopicBetween(BatchDetails batchDetails, Calendar startOfWeek, Calendar endOfWeek) {
-		Topics topicToReturn = null;
-		TopicStatus planned = topicStatusRepo.findByStatus("Planned");
-
-		List<BatchProgress> batchProgressList = progressService.getAllBatchProgressForStatus(batchDetails, planned);
-		for (BatchProgress batchProgress : batchProgressList) {
-			Calendar plannedDate = Calendar.getInstance();
-			plannedDate.setTime(batchProgress.getPlannedStartDate());
-			if ((plannedDate.after(startOfWeek) || plannedDate.equals(startOfWeek))
-					&& (plannedDate.before(endOfWeek) || plannedDate.equals(endOfWeek))) {
-				topicToReturn = batchProgress.getTopic(); // The first planned topic found is good enough. Break the
-															// loop
-				break;
-			}
-		}
-		return topicToReturn;
-	}
+//	private Topics findInProgressTopic(BatchDetails batchDetails) {
+//		Topics topicToReturn = null;
+//		TopicStatus inProgress = topicStatusRepo.findByStatus("In Progress");
+//
+//		List<BatchProgress> batchProgressList = progressService.getAllBatchProgressForStatus(batchDetails, inProgress);
+//		if (batchProgressList.size() > 0) {
+//			topicToReturn = batchProgressList.get(0).getTopic();
+//		}
+//
+//		return topicToReturn;
+//	}
+//
+//	private Topics findPlannedTopicBetween(BatchDetails batchDetails, Calendar startOfWeek, Calendar endOfWeek) {
+//		Topics topicToReturn = null;
+//		TopicStatus planned = topicStatusRepo.findByStatus("Planned");
+//
+//		List<BatchProgress> batchProgressList = progressService.getAllBatchProgressForStatus(batchDetails, planned);
+//		for (BatchProgress batchProgress : batchProgressList) {
+//			Calendar plannedDate = Calendar.getInstance();
+//			plannedDate.setTime(batchProgress.getPlannedStartDate());
+//			if ((plannedDate.after(startOfWeek) || plannedDate.equals(startOfWeek))
+//					&& (plannedDate.before(endOfWeek) || plannedDate.equals(endOfWeek))) {
+//				topicToReturn = batchProgress.getTopic(); // The first planned topic found is good enough. Break the
+//															// loop
+//				break;
+//			}
+//		}
+//		return topicToReturn;
+//	}
 
 	@Override
 	public int generateNewTopics(TopicGenerationRequest request) throws TSHException {
@@ -280,6 +213,7 @@ public class TopicService implements ITopicService {
 		return topicList.size();
 	}
 
+	@Cacheable("TshCache")
 	@Override
 	public List<Topics> getAllActiveTopics() {
 		return topicsRepo.findAllByActiveOrderByGradeId(true);
@@ -337,5 +271,31 @@ public class TopicService implements ITopicService {
 		}
 
 		return topicsRepo.save(topic);
+	}
+
+	@Override
+	public void createAllTopics(List<TopicRequest> topicList) {
+		List<Topics> topics = new ArrayList<>();
+		ModelMapper mapper = new ModelMapper();
+
+		for (TopicRequest r : topicList) {
+			Topics t = mapper.map(r, Topics.class);
+			t.setActive(true);
+			t.setDefaultComplexity();
+			t.setDefaultEstimatedHours();
+			t.setCourse(generalService.getCourses(r.getCourse()).orElse(null));
+			t.setGrade(generalService.getGrades(Integer.parseInt(r.getGrade())).orElse(null));
+			t.setTerm(generalService.getTerm(Integer.parseInt(r.getTerm())));
+			t.setWeek(generalService.getWeekByWeekNumber(Integer.parseInt(r.getWeek())));
+			topics.add(t);
+		}
+
+		this.saveAllTopics(topics);
+		logger.info("{} topics saved successfully.", topics.size());
+	}
+
+	@Override
+	public Topics getForGradeCourseTermAndWeek(Grades grade, Course course, Term term, Week week) {
+		return topicsRepo.findByGradeAndCourseAndTermAndWeekAndActive(grade, course, term, week, true);
 	}
 }

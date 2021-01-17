@@ -2,7 +2,6 @@ package com.tsh.entities;
 
 import java.sql.Time;
 
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -10,25 +9,30 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 @Entity
-@Table(name="timeslot")
-public class TimeSlot extends BaseEntity{
+@Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
+@Table(name = "timeslot")
+public class TimeSlot extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
+
 	private int weekday;
-	
-	@Column(name="starttime")
+
+	@Column(name = "starttime")
 	private Time startTime;
-	
-	@Column(name="endtime")
+
+	@Column(name = "endtime")
 	private Time endTime;
-	
+
 	private String name;
-	
-	public TimeSlot() {}
+
+	public TimeSlot() {
+	}
 
 	public int getId() {
 		return id;
@@ -96,5 +100,5 @@ public class TimeSlot extends BaseEntity{
 	@Override
 	public String toString() {
 		return "TimeSlot [weekday=" + weekday + ", startTime=" + startTime + ", name=" + name + "]";
-	}	
+	}
 }

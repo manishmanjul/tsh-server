@@ -324,4 +324,86 @@ public class FeedbackService implements IFeedbackService {
 			Teacher teacher) {
 		return studentFeedbackRepo.findByStudentBatchesAndTopicAndTeacher(studentBatches, topic, teacher);
 	}
+
+	@Override
+	public FeedbackCategoryTO addFeedbackCategory(FeedbackCategoryTO categoryTO) {
+
+		FeedbackCategory category = new FeedbackCategory();
+		category.setActive(true);
+		category.setDescription(categoryTO.getDescription());
+		category.setGrade(categoryTO.getGrade());
+		category.setOrder(categoryTO.getOrder());
+
+		category = feedbackCategoryRepo.save(category);
+		if (category == null)
+			categoryTO = null;
+		return categoryTO;
+	}
+
+	@Override
+	public FeedbackTO addFeedbackItem(FeedbackTO feedbackTO) throws TSHException {
+		Feedback feedback = new Feedback();
+		feedback.setActive(true);
+		feedback.setCriteria(feedbackTO.getCriteria());
+		feedback.setDescription(feedbackTO.getDescription());
+		feedback.setShortDescription(feedbackTO.getShortDescription());
+		FeedbackCategory feedbackCategory = feedbackCategoryRepo.findById(feedbackTO.getCategory()).orElse(null);
+		if (feedbackCategory == null)
+			throw new TSHException("No Feedback Category found with ID: " + feedbackTO.getCategory());
+
+		feedback.setCategory(feedbackCategory);
+		feedback = feedbackRepo.saveAndFlush(feedback);
+		if (feedback == null)
+			feedbackTO = null;
+
+		return feedbackTO;
+	}
+
+	@Override
+	public FeedbackCategoryTO toggleFeedbackCategoryState(FeedbackCategoryTO category) throws TSHException {
+		FeedbackCategoryTO returnResponse = null;
+		FeedbackCategory fCategory = feedbackCategoryRepo.findById(category.getId()).orElse(null);
+		if (fCategory == null)
+			throw new TSHException("No Feedback Category found wit ID: " + category.getId());
+
+		fCategory.setActive(!fCategory.isActive());
+		for (Feedback f : fCategory.getFeedbacks()) {
+			f.setActive(fCategory.isActive());
+		}
+
+		fCategory = feedbackCategoryRepo.saveAndFlush(fCategory);
+		if (fCategory != null)
+			returnResponse = category;
+
+		logger.info("Feedback Category with id: {} and its associated Feedback Items state was changed to {}",
+				category.getId(), fCategory.isActive());
+
+		return returnResponse;
+	}
+
+	@Override
+	public FeedbackTO toggleFeedbackItemState(FeedbackTO feedback) throws TSHException {
+		FeedbackTO returnResponse = null;
+
+		Feedback f = getFeedbackById(feedback.getId());
+		if (f == null)
+			throw new TSHException("No Feedback item found with ID: " + feedback.getId());
+
+		f.setActive(!f.isActive());
+		f = feedbackRepo.saveAndFlush(f);
+		if (f != null)
+			returnResponse = feedback;
+
+		logger.info("Feedback item with id: {} state has been changed to : {}", feedback.getId(), feedback.isActive());
+		return returnResponse;
+	}
+
+	@Override
+	public FeedbackCategoryTO findFeedbackCategoryById(int id) {
+		FeedbackCategory fCategory = feedbackCategoryRepo.findById(id).orElse(null);
+		FeedbackCategoryTO fCategoryTO = null;
+		ModelMapper mapper = new ModelMapper();
+		fCategoryTO = mapper.map(fCategory, FeedbackCategoryTO.class);
+		return fCategoryTO;
+	}
 }

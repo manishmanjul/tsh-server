@@ -10,7 +10,11 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 @Entity
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @Table(name = "features")
 public class Features extends BaseEntity {
 
@@ -39,6 +43,12 @@ public class Features extends BaseEntity {
 
 	@Column(name = "description")
 	private String description;
+
+	@Column(name = "page")
+	private String page;
+
+	@Column(name = "title")
+	private String title;
 
 	public int getId() {
 		return id;
@@ -102,6 +112,22 @@ public class Features extends BaseEntity {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public String getPage() {
+		return page;
+	}
+
+	public void setPage(String page) {
+		this.page = page;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
 	}
 
 	@Override

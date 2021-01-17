@@ -1,8 +1,13 @@
 package com.tsh.service.impl;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -10,6 +15,7 @@ import org.springframework.stereotype.Service;
 import com.tsh.entities.Features;
 import com.tsh.entities.Role;
 import com.tsh.entities.User;
+import com.tsh.library.dto.FeaturesTO;
 import com.tsh.library.dto.UserPrinciple;
 import com.tsh.repositories.FeaturesRepository;
 import com.tsh.repositories.RolesRepository;
@@ -26,6 +32,8 @@ public class LoginService implements ILoginService {
 	@Autowired
 	private RolesRepository rolesRepo;
 
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
+
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
@@ -35,6 +43,7 @@ public class LoginService implements ILoginService {
 		return new UserPrinciple(user);
 	}
 
+	@Cacheable("TshCache")
 	@Override
 	public List<Features> finAllFeaturesByRole(Role role) {
 
@@ -64,5 +73,24 @@ public class LoginService implements ILoginService {
 	@Override
 	public boolean isUserNameExist(String userName) {
 		return userRepo.existsByName(userName);
+	}
+
+	@Cacheable("TshCache")
+	@Override
+	public List<FeaturesTO> findAllFeaturesByRoleAndContainerPage(Role role, String pageName) {
+		List<Features> featureList = null;
+		List<FeaturesTO> featureTOList = null;
+
+		featureList = featuresRepo.findByPermissionAndPage(role.getPermissionString(), pageName);
+		ModelMapper mapper = new ModelMapper();
+
+		featureTOList = featureList.stream().map(f -> {
+			FeaturesTO featureTO = mapper.map(f, FeaturesTO.class);
+			featureTO.setKey("" + f.getId());
+			return featureTO;
+		}).collect(Collectors.toList());
+
+		logger.info("{} features fetched for {}", featureTOList.size(), pageName);
+		return featureTOList;
 	}
 }
