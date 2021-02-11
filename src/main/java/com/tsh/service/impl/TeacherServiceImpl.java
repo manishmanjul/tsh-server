@@ -10,7 +10,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.tsh.entities.Teacher;
+import com.tsh.entities.TeacherDetails;
 import com.tsh.entities.User;
+import com.tsh.repositories.TeacherDetailsRepository;
 import com.tsh.repositories.TeachersRepository;
 import com.tsh.service.ITeacherService;
 
@@ -23,6 +25,8 @@ public class TeacherServiceImpl implements ITeacherService {
 
 	@Autowired
 	private TeachersRepository teacherRepo;
+	@Autowired
+	private TeacherDetailsRepository teacherDetailsRepo;
 
 	@Override
 	public Teacher findByName(String name) {
@@ -56,5 +60,10 @@ public class TeacherServiceImpl implements ITeacherService {
 			this.teachers = this.findAllTeachers();
 		}
 		return teachers.stream().filter(t -> t.getTeacherName().equals(teacher)).findFirst();
+	}
+
+	@Override
+	public TeacherDetails getTeacherDetails(Teacher teacher) {
+		return teacherDetailsRepo.findByTeacher(teacher);
 	}
 }

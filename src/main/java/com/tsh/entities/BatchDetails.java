@@ -2,6 +2,7 @@ package com.tsh.entities;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -12,6 +13,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -64,6 +66,11 @@ public class BatchDetails extends BaseEntity {
 
 	@Column(name = "active")
 	private boolean active;
+
+	@Transient
+	private BatchProgress batchProgress;
+	@Transient
+	private List<StudentBatches> studentBatchList;
 
 	public boolean isActive() {
 		return active;
@@ -172,6 +179,22 @@ public class BatchDetails extends BaseEntity {
 		this.term = term;
 	}
 
+	public BatchProgress getBatchProgress() {
+		return batchProgress;
+	}
+
+	public void setBatchProgress(BatchProgress batchProgress) {
+		this.batchProgress = batchProgress;
+	}
+
+	public List<StudentBatches> getStudentBatchList() {
+		return studentBatchList;
+	}
+
+	public void setStudentBatchList(List<StudentBatches> studentBatchList) {
+		this.studentBatchList = studentBatchList;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -242,5 +265,27 @@ public class BatchDetails extends BaseEntity {
 
 	public boolean isCLassToday() {
 		return this.batch.getTimeSlot().getWeekday() == TshUtil.getTodaysWeekDay();
+	}
+
+	public boolean hasTeacherChanged() {
+		if (batchProgress == null)
+			return false;
+		if (batchProgress.getTeacher() == getTeacher())
+			return false;
+		else
+			return true;
+	}
+
+	public boolean isThisMyClass(User loggedInUser) {
+		Teacher teacher = getTeacher();
+		if (batchProgress != null)
+			if (batchProgress.getTeacher() != null)
+				teacher = batchProgress.getTeacher();
+
+		if (teacher.getUser().equals(loggedInUser))
+			return true;
+		else
+			return false;
+
 	}
 }

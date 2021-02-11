@@ -98,7 +98,7 @@ public class FeedbackReader {
 					Map<String, BaseEntity> val = getStudentAndCourse(stud, course, line);
 					stud = (Student) val.get("student");
 					course = (Course) val.get("course");
-					batches = studentService.getStudentBatches(stud, course)
+					batches = studentService.getActiveStudentBatchesForCourseCategory(stud, course)
 							.orElseThrow(() -> new TSHException("Student Batch not found"));
 					break;
 				case PROGRESS_HEADER:

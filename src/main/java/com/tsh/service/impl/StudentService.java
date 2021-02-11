@@ -19,6 +19,7 @@ import com.tsh.entities.ImportItem;
 import com.tsh.entities.Student;
 import com.tsh.entities.StudentBatches;
 import com.tsh.entities.Teacher;
+import com.tsh.entities.User;
 import com.tsh.exception.TSHException;
 import com.tsh.library.dto.StudentTO;
 import com.tsh.repositories.AttendenceRepository;
@@ -54,10 +55,12 @@ public class StudentService implements IStudentService {
 				&& s.getGrade().getGrade() == item.getGradeNumber() && s.isActive()).findFirst();
 	}
 
-	public Optional<StudentBatches> getStudentBatches(Student student, Course course) {
-		logger.info("Finding student's existing batches...");
+	public Optional<StudentBatches> getActiveStudentBatchesForCourseCategory(Student student, Course course) {
+		logger.info("Finding student's existing batches for course category {}", course.getCategoryString());
 		this.studentBatches = this.studentBatchesRepo.findByStudent(student);
-		return this.studentBatches.stream().filter(sd -> sd.getCourse().equals(course)).findFirst();
+		return this.studentBatches.stream()
+				.filter(sd -> sd.getCourse().getCategory() == course.getCategory() && sd.getEndDate() == null)
+				.findFirst();
 	}
 
 	public Student getStudentByNameAndGrade(String name, Grades grade) {
@@ -90,13 +93,20 @@ public class StudentService implements IStudentService {
 		return studentRepo.save(student);
 	}
 
-//	@Cacheable("TshCache")
+	/**
+	 * In case the logged in user is an admin. Return all students.
+	 */
 	@Override
-	public List<StudentTO> getStudentsForTeacher(Teacher teacher) {
+	public List<StudentTO> getAllActiveStudentsForTeacher(Teacher teacher, User loggedinUser) {
 		List<StudentTO> studentTOList = new ArrayList<>();
-		List<StudentBatches> studentBatches = studentBatchesRepo.findAllByBatchDetailsTeacher(teacher);
+		List<StudentBatches> studentBatches = null;
+		if (loggedinUser.isAdmin()) {
+			studentBatches = getAllActiveStudentBatches();
+		} else if (loggedinUser.isTeacher1() || loggedinUser.isTeacher2()) {
+			studentBatches = studentBatchesRepo.findAllByBatchDetailsTeacherAndEndDateIsNull(teacher);
+		}
 		for (StudentBatches studBatch : studentBatches) {
-			if (studBatch.getStudent().isActive()) {
+			if (studBatch.getStudent().isActive() && studBatch.getEndDate() == null) {
 				StudentTO studentTO = new StudentTO();
 				studentTO.setId(studBatch.getId());
 				studentTO.setName(studBatch.getStudent().getStudentName());
@@ -106,6 +116,16 @@ public class StudentService implements IStudentService {
 			}
 		}
 		return studentTOList;
+	}
+
+	@Override
+	public List<StudentBatches> getAllActiveStudentBatches() {
+		return studentBatchesRepo.findAllByEndDateIsNull();
+	}
+
+	@Override
+	public List<StudentBatches> getAllActiveStudentBatches(Teacher teacher) {
+		return studentBatchesRepo.findAllByBatchDetailsTeacherAndEndDateIsNull(teacher);
 	}
 
 	@Override
@@ -120,4 +140,34 @@ public class StudentService implements IStudentService {
 
 		return true;
 	}
+
+	@Override
+	public List<StudentBatches> getAllStudentBatchesWithBatchDetailsStatus(boolean status) {
+		return studentBatchesRepo.findAllByBatchDetailsActive(status);
+	}
+
+	@Transactional
+	public void saveStudentBatches(List<StudentBatches> studentBatches) {
+		studentBatchesRepo.saveAll(studentBatches);
+	}
+
+	@Override
+	public List<Student> getAllActiveStudents() {
+		return studentRepo.findAllByActive(true);
+	}
+
+	@Override
+	public boolean isEnrolledToABatch(Student student) {
+		List<StudentBatches> batches = studentBatchesRepo.findAllByStudentAndEndDateIsNull(student);
+		if (batches.size() > 0)
+			return true;
+		else
+			return false;
+	}
+
+	@Override
+	public void saveAllStudents(List<Student> students) {
+		studentRepo.saveAll(students);
+	}
+
 }

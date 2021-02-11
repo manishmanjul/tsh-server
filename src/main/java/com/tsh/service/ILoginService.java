@@ -19,6 +19,8 @@ public interface ILoginService extends UserDetailsService {
 
 	public User addNewUser(User newUser);
 
+	public User updateUser(User usr);
+
 	public boolean isExistingUser(User newUser);
 
 	public boolean isUserNameExist(String userName);

@@ -12,6 +12,7 @@ import com.tsh.entities.ImportItem;
 import com.tsh.entities.Student;
 import com.tsh.entities.StudentBatches;
 import com.tsh.entities.Teacher;
+import com.tsh.entities.User;
 import com.tsh.exception.TSHException;
 import com.tsh.library.dto.StudentTO;
 
@@ -20,11 +21,17 @@ public interface IStudentService extends TshService {
 
 	Optional<Student> getStudent(ImportItem item);
 
-	Optional<StudentBatches> getStudentBatches(Student student, Course course);
+	public List<Student> getAllActiveStudents();
+
+	Optional<StudentBatches> getActiveStudentBatchesForCourseCategory(Student student, Course course);
 
 	List<StudentBatches> getStudentBatches(BatchDetails batch);
 
-	List<StudentTO> getStudentsForTeacher(Teacher teacher);
+	List<StudentTO> getAllActiveStudentsForTeacher(Teacher teacher, User loggedinUser);
+
+	List<StudentBatches> getAllActiveStudentBatches();
+
+	public List<StudentBatches> getAllActiveStudentBatches(Teacher teacher);
 
 	Student getStudentByNameAndGrade(String name, Grades grade);
 
@@ -34,6 +41,14 @@ public interface IStudentService extends TshService {
 
 	Student saveStudent(Student student);
 
+	public void saveStudentBatches(List<StudentBatches> studentBatches);
+
+	public void saveAllStudents(List<Student> students);
+
 	public boolean markAbsent(StudentBatches studentBatch) throws TSHException;
+
+	public List<StudentBatches> getAllStudentBatchesWithBatchDetailsStatus(boolean status);
+
+	public boolean isEnrolledToABatch(Student student);
 
 }

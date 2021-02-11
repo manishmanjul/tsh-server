@@ -12,6 +12,7 @@ public class FeedbackProvider {
 	private List<FeedbackCategoryTO> feedbackCategory;
 	private Date feedbackDate;
 	private StudentBatches studentBatch;
+	private UserTO userTO;
 
 	public TeacherTO getTeacher() {
 		return teacher;
@@ -50,6 +51,14 @@ public class FeedbackProvider {
 
 	public void setStudentBatch(StudentBatches studentBatch) {
 		this.studentBatch = studentBatch;
+	}
+
+	public UserTO getUserTO() {
+		return userTO;
+	}
+
+	public void setUserTO(UserTO userTO) {
+		this.userTO = userTO;
 	}
 
 	@Override

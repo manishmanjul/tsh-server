@@ -43,6 +43,10 @@ public class StudentFeedback extends BaseEntity {
 	private Teacher teacher;
 
 	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "user_id")
+	private User user;
+
+	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "topic_id")
 	private Topics topic;
 
@@ -103,6 +107,14 @@ public class StudentFeedback extends BaseEntity {
 
 	public void setTopic(Topics topic) {
 		this.topic = topic;
+	}
+
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
 	}
 
 	@Override

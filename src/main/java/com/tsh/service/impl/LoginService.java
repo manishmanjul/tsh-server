@@ -7,7 +7,6 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -43,7 +42,6 @@ public class LoginService implements ILoginService {
 		return new UserPrinciple(user);
 	}
 
-	@Cacheable("TshCache")
 	@Override
 	public List<Features> finAllFeaturesByRole(Role role) {
 
@@ -75,7 +73,6 @@ public class LoginService implements ILoginService {
 		return userRepo.existsByName(userName);
 	}
 
-	@Cacheable("TshCache")
 	@Override
 	public List<FeaturesTO> findAllFeaturesByRoleAndContainerPage(Role role, String pageName) {
 		List<Features> featureList = null;
@@ -92,5 +89,10 @@ public class LoginService implements ILoginService {
 
 		logger.info("{} features fetched for {}", featureTOList.size(), pageName);
 		return featureTOList;
+	}
+
+	@Override
+	public User updateUser(User usr) {
+		return userRepo.save(usr);
 	}
 }

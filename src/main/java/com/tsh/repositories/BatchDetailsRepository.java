@@ -11,19 +11,20 @@ import com.tsh.entities.BatchDetails;
 import com.tsh.entities.Teacher;
 
 @Repository
-public interface BatchDetailsRepository extends JpaRepository<BatchDetails, Integer>{
-	
+public interface BatchDetailsRepository extends JpaRepository<BatchDetails, Integer> {
+
 	public List<BatchDetails> findByActive(boolean active);
-	
-	@Query( value = "select b.* from batch_details b LEFT join student_batches s on b.id = s.batch_details_id "
-			+ "where b.active = 1 AND (s.batch_details_id is null or s.end_date is not null);",
-			nativeQuery = true)
+
+	@Query(value = "select b.* from batch_details b LEFT join student_batches s on b.id = s.batch_details_id "
+			+ "where b.active = 1 AND (s.batch_details_id is null or s.end_date is not null);", nativeQuery = true)
 	public List<BatchDetails> findAllOrphans();
-	
-	@Query("Select bd from BatchDetails bd join bd.batch b join b.timeSlot t where t.weekday = :weekDay")
-	public List<BatchDetails> findAllBatchesForWeekday(@Param("weekDay") int weekDay);
-	
+
+	@Query("Select bd from BatchDetails bd join bd.batch b join b.timeSlot t where t.weekday = :weekDay and bd.active = 1")
+	public List<BatchDetails> findAllActiveBatchesForWeekday(@Param("weekDay") int weekDay);
+
 	public List<BatchDetails> findAllByTeacherAndActive(Teacher teacher, boolean active);
-	
+
 	public BatchDetails findById(int id);
+
+	public List<BatchDetails> findByIdIn(List<Integer> idList);
 }

@@ -16,10 +16,10 @@ public interface TopicsRepository extends JpaRepository<Topics, Integer> {
 
 	public List<Topics> findByMappedId(String mappedId);
 
-	public List<Topics> findAllByCourseAndGradeAndActive(Course course, Grades grade, boolean active);
+	public List<Topics> findAllByCourseAndGradeAndTermAndActive(Course course, Grades grade, Term term, boolean active);
 
 	public List<Topics> findAllByActiveOrderByGradeId(boolean active);
 
-	public Topics findByGradeAndCourseAndTermAndWeekAndActive(Grades grade, Course course, Term term, Week week,
+	public List<Topics> findByGradeAndCourseAndTermAndWeekAndActive(Grades grade, Course course, Term term, Week week,
 			boolean active);
 }

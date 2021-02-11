@@ -12,6 +12,7 @@ import com.tsh.entities.StudentBatches;
 import com.tsh.entities.StudentFeedback;
 import com.tsh.entities.Teacher;
 import com.tsh.entities.Topics;
+import com.tsh.entities.User;
 import com.tsh.exception.TSHException;
 import com.tsh.library.dto.DeleteFeedbackRequest;
 import com.tsh.library.dto.FeedbackCategoryTO;
@@ -39,9 +40,9 @@ public interface IFeedbackService {
 
 	List<FeedbackCategory> getAllFeedbackCategories(int grade);
 
-	Map<String, String> getDummyFeedbackMap();
+	public List<FeedbackCategoryTO> getEmptyFeedback(int grade);
 
-	public void processStudentFeedback(BatchDetails batchDetails, StudentFeedbackRequestTO inputData)
+	public void processStudentFeedback(BatchDetails batchDetails, StudentFeedbackRequestTO inputData, User loggedinUser)
 			throws TSHException;
 
 	public StudentFeedback saveFeedback(StudentFeedback feedback) throws TSHException;

@@ -1,5 +1,6 @@
 package com.tsh.service.impl;
 
+import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,6 +16,7 @@ import com.tsh.entities.BatchProgress;
 import com.tsh.entities.Course;
 import com.tsh.entities.Student;
 import com.tsh.entities.StudentBatches;
+import com.tsh.entities.Teacher;
 import com.tsh.entities.TopicProgress;
 import com.tsh.entities.TopicStatus;
 import com.tsh.entities.Topics;
@@ -287,6 +289,16 @@ public class ProgressService implements IProgressService {
 	}
 
 	@Override
+	public List<BatchProgress> getAllBatchProgressPlannedOn(Date plannedStartDate) {
+		return batchProgressRepo.findAllByPlannedStartDate(plannedStartDate);
+	}
+
+	@Override
+	public List<BatchProgress> getAllBatchProgressPlannedOn(String plannedStartDate) throws ParseException {
+		return getAllBatchProgressPlannedOn(TshUtil.toDate(plannedStartDate));
+	}
+
+	@Override
 	public BatchProgress getNextPlannedBatchProgress(BatchDetails batch) throws TSHException {
 		List<BatchProgress> progressList = batchProgressRepo
 				.findByBatchDetailsAndPlannedStartDateGreaterThanOrderByPlannedStartDate(batch,
@@ -304,4 +316,18 @@ public class ProgressService implements IProgressService {
 		batchProgressRepo.saveAll(batches);
 
 	}
+
+	@Override
+	public List<BatchProgress> getAllBatchProgressTodayAndAfter() throws TSHException {
+		Date today = TshUtil.getCurrentDate();
+		return batchProgressRepo.findAllMaxRecordsWithPlannedStartDateOrStartDateGreaterThan(today);
+	}
+
+	@Override
+	public List<BatchProgress> getAllBatchProgressTodayAndAfter(Teacher teacher) throws TSHException {
+		Date today = TshUtil.getCurrentDate();
+		return batchProgressRepo.findMaxRecordsForTeacherWithPlannedStartDateOrStartDateGreaterThan(today,
+				teacher.getId());
+	}
+
 }

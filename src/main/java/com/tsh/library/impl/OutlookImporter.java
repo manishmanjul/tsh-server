@@ -15,6 +15,7 @@ import java.util.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import com.tsh.entities.ImportItem;
@@ -44,6 +45,7 @@ import microsoft.exchange.webservices.data.search.FindItemsResults;
 import microsoft.exchange.webservices.data.search.FolderView;
 
 @Component
+@ConfigurationProperties(prefix = "outlook")
 public class OutlookImporter implements DataImporter {
 
 	private ExchangeService service;

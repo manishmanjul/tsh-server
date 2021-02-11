@@ -1,8 +1,10 @@
 package com.tsh.utility;
 
+import java.sql.Time;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -175,6 +177,18 @@ public class TshUtil {
 		return today.get(Calendar.DAY_OF_WEEK);
 	}
 
+	public static int getWeekDayOf(Date dt) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(dt);
+		return cal.get(Calendar.DAY_OF_WEEK);
+	}
+
+	public static int getWeekDayOf(String dt) throws ParseException {
+		DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
+		Date ofDate = formatter.parse(dt);
+		return getWeekDayOf(ofDate);
+	}
+
 	public static int getWeekNUmberPost(Date date) {
 		Date today = null;
 		try {
@@ -184,7 +198,13 @@ public class TshUtil {
 		}
 		long diff = today.getTime() - date.getTime();
 		long days = TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
-		int weekNumber = new Long(days / 7).intValue();
+		int weekNumber = 0;
+		if (days % 7 == 0) {
+			weekNumber = new Long(days / 7).intValue();
+		} else {
+			weekNumber = (new Long(days / 7).intValue()) + 1;
+		}
+
 		return weekNumber;
 	}
 
@@ -209,6 +229,24 @@ public class TshUtil {
 		} catch (ParseException e) {
 			throw new TSHException(e.getMessage());
 		}
+		return returnDate;
+	}
+
+	public static String formatTimeToHHmm(Time time) {
+		return time.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm a"));
+	}
+
+	public static Date toDate(String dt) throws ParseException {
+		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+		Date returnDate = null;
+		try {
+			returnDate = formatter.parse(dt);
+			return returnDate;
+		} catch (ParseException e) {
+		}
+
+		formatter = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
+		returnDate = formatter.parse(dt);
 		return returnDate;
 	}
 

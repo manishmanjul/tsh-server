@@ -15,6 +15,10 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 @Table(name = "course")
 public class Course extends BaseEntity {
 
+	public static int ENGLISH_CATEGORY = 1;
+	public static int MATHS_CATEGORY = 2;
+	public static int GA_CATEGORY = 3;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
@@ -104,5 +108,16 @@ public class Course extends BaseEntity {
 	@Override
 	public String toString() {
 		return "Course [id=" + id + ", shortDescription=" + shortDescription + "]";
+	}
+
+	public String getCategoryString() {
+		if (category == Course.ENGLISH_CATEGORY)
+			return "English";
+		if (category == Course.MATHS_CATEGORY)
+			return "Maths";
+		if (category == Course.GA_CATEGORY)
+			return "GA";
+
+		return null;
 	}
 }

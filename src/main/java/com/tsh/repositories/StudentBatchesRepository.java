@@ -20,5 +20,12 @@ public interface StudentBatchesRepository extends JpaRepository<StudentBatches, 
 
 	public List<StudentBatches> findByStudentAndCourse(Student stud, Course course);
 
-	public List<StudentBatches> findAllByBatchDetailsTeacher(Teacher teacher);
+	public List<StudentBatches> findAllByBatchDetailsTeacherAndEndDateIsNull(Teacher teacher);
+
+	public List<StudentBatches> findAllByEndDateIsNull();
+
+	public List<StudentBatches> findAllByBatchDetailsActive(boolean active);
+
+	public List<StudentBatches> findAllByStudentAndEndDateIsNull(Student student);
+
 }

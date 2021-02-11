@@ -40,6 +40,7 @@ import com.tsh.service.IProcessService;
 import com.tsh.service.IStudentService;
 import com.tsh.service.ITeacherService;
 import com.tsh.service.ITopicService;
+import com.tsh.utility.TshUtil;
 
 @Service
 public class DataImportService implements IDataImportService {
@@ -96,7 +97,12 @@ public class DataImportService implements IDataImportService {
 				nextChunk = nextChunk + chunkSize;
 				oldStep = newStep;
 			}
-			result = importThisItem(it);
+			try {
+				result = importThisItem(it);
+			} catch (Exception e) {
+				processService.failStep(newStep, parent);
+				throw e;
+			}
 		}
 		items.clear();
 		newStep = processService.closeOldAndCreateNewStep(oldStep, "Finally Cleaning up", stepNum++, 0.25, parent);
@@ -118,7 +124,7 @@ public class DataImportService implements IDataImportService {
 //	}
 
 	@Transactional
-	private void manageOrphanBatchDetails() {
+	private void manageOrphanBatchDetails() throws TSHException {
 		logger.info("Retrieve all Batch Details that are either orphans or effectvely inactive.");
 		List<BatchDetails> batchDetails = batchService.findAllOrphanBatchDetails();
 		logger.info("{} Orphan or effectively inactive Batch Details found.", batchDetails.size());
@@ -131,6 +137,30 @@ public class DataImportService implements IDataImportService {
 			batchService.saveBatchDetails(batchDetails);
 			logger.info("{} orphan Batch Details marked inactive successfully", batchDetails.size());
 		}
+
+		List<StudentBatches> studentBatches = studentService.getAllStudentBatchesWithBatchDetailsStatus(false);
+		logger.info("Ending {} Student Batches with no associated batch.", studentBatches.size());
+		for (StudentBatches studBatch : studentBatches) {
+			studBatch.setEndDate(TshUtil.getCurrentDate());
+		}
+
+		if (studentBatches.size() > 0) {
+			studentService.saveStudentBatches(studentBatches);
+		}
+
+		List<Student> students = studentService.getAllActiveStudents();
+		List<Student> inActiveStudents = new ArrayList<>();
+		for (Student stud : students) {
+			if (!studentService.isEnrolledToABatch(stud)) {
+				stud.setActive(false);
+				inActiveStudents.add(stud);
+			}
+		}
+
+		if (inActiveStudents.size() > 0) {
+			studentService.saveAllStudents(inActiveStudents);
+		}
+
 	}
 
 	@Transactional
@@ -202,6 +232,7 @@ public class DataImportService implements IDataImportService {
 
 		// Get All master data from DB. We would need them to validate and create new
 		// instances.
+
 		TimeSlot timeSlot = generalService
 				.getTimeSlot(item.getBatchWeekDay(), item.getBatchStartTime(), item.getBatchEndTime())
 				.orElseThrow(() -> new TSHException(
@@ -247,7 +278,7 @@ public class DataImportService implements IDataImportService {
 			logger.info(studentBatches.toString());
 		} else { // Old Student. Maybe the batch Changed.
 			logger.info("Student record found for : {}", item.getName());
-			studentBatches = studentService.getStudentBatches(student, course)
+			studentBatches = studentService.getActiveStudentBatchesForCourseCategory(student, course)
 					.orElse(StudentBatches.getNewInstance(student, course));
 			if (studentBatches.getBatchDetails() == null)
 				studentBatches.setBatchDetails(batchDetails);
@@ -258,7 +289,11 @@ public class DataImportService implements IDataImportService {
 				logger.info("Old Batch and current bactch mismatch. Assigning new Batch to {}", item.getName());
 				StudentBatches newStudentBatch = StudentBatches.getNewInstance(student, course); // Create a new Student
 																									// Batch. We want to
-																									// keep the history.
+				logger.info("Ending {}'s enrollment to old batch - id : {}, for course : {} grade :{} and Term: {}",
+						student.getStudentName(), studentBatches.getId(),
+						studentBatches.getCourse().getShortDescription(),
+						studentBatches.getBatchDetails().getGrade().getGrade(),
+						studentBatches.getBatchDetails().getTerm().getTerm()); // keep the history.
 				studentBatches.setEndDate(Calendar.getInstance().getTime()); // Set old studentBatch end date to
 																				// deactivate
 				newStudentBatch.setBatchDetails(batchDetails);

@@ -31,10 +31,14 @@ public class DataImportController {
 	public String importData() {
 		logger.info("Request to import data from external source recieved by Data Import Controller");
 		String result = "Success from import outlook";
-		/*
-		 * try { result = importService.importData(); } catch (Exception e) {
-		 * e.printStackTrace(); return e.getMessage(); }
-		 */
+
+//		try {
+//			result = importService.importDataFromOutlook();
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			return e.getMessage();
+//		}
+
 		return result;
 	}
 

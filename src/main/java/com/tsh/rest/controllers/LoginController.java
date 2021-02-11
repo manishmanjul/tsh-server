@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tsh.entities.Features;
+import com.tsh.entities.Teacher;
 import com.tsh.library.dto.AuthenticationRequest;
 import com.tsh.library.dto.AuthenticationResponse;
 import com.tsh.library.dto.FeatureTypeTO;
@@ -82,7 +83,16 @@ public class LoginController {
 			return featureTO;
 		}).collect(Collectors.toList()));
 
-		welcome.setTeacher(mapper.map(teacherService.findByUser(principle.getUser()), TeacherTO.class));
+		Teacher teacher = teacherService.findByUser(principle.getUser());
+		if (teacher != null)
+			welcome.setTeacher(mapper.map(teacher, TeacherTO.class));
+		else {
+			TeacherTO t = new TeacherTO();
+			t.setId(999999);
+			t.setTeacherName(principle.getUsername());
+			welcome.setTeacher(t);
+		}
+
 		logger.info("Welcome kit prepared.");
 		return ResponseEntity.ok(new AuthenticationResponse(jwt, welcome));
 	}

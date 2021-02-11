@@ -11,4 +11,6 @@ import com.tsh.entities.Student;
 @Repository
 public interface StudentRepository extends JpaRepository<Student, Integer> {
 	public List<Student> findByStudentNameAndGrade(String studName, Grades grade);
+
+	public List<Student> findAllByActive(boolean active);
 }

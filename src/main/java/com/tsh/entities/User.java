@@ -9,6 +9,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -20,6 +21,17 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @Table(name = "user")
 public class User extends BaseEntity {
+
+	@Transient
+	private final String ADMIN = "Administrator";
+	@Transient
+	private final String TEACHER1 = "Teacher1";
+	@Transient
+	private final String TEACHER2 = "Teacher2";
+	@Transient
+	private final String STUDENT = "Student";
+	@Transient
+	private final String PARENT = "Parent";
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,6 +48,9 @@ public class User extends BaseEntity {
 
 	@Column(name = "email")
 	private String email;
+
+	@Column(name = "first_login")
+	private boolean firstLogin;
 
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "role_id")
@@ -96,6 +111,14 @@ public class User extends BaseEntity {
 		return "User [id=" + id + ", name=" + name + "]";
 	}
 
+	public boolean isFirstLogin() {
+		return firstLogin;
+	}
+
+	public void setFirstLogin(boolean firstLogin) {
+		this.firstLogin = firstLogin;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -131,5 +154,25 @@ public class User extends BaseEntity {
 		} else if (!phone.equals(other.phone))
 			return false;
 		return true;
+	}
+
+	public boolean isAdmin() {
+		return getRole().getRoleName().equalsIgnoreCase(ADMIN);
+	}
+
+	public boolean isTeacher1() {
+		return getRole().getRoleName().equalsIgnoreCase(TEACHER1);
+	}
+
+	public boolean isTeacher2() {
+		return getRole().getRoleName().equalsIgnoreCase(TEACHER2);
+	}
+
+	public boolean isStudent() {
+		return getRole().getRoleName().equalsIgnoreCase(STUDENT);
+	}
+
+	public boolean isParent() {
+		return getRole().getRoleName().equalsIgnoreCase(PARENT);
 	}
 }

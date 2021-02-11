@@ -38,6 +38,8 @@ public interface BatchProgressRepository extends JpaRepository<BatchProgress, In
 
 	public BatchProgress findByBatchDetailsAndPlannedStartDate(BatchDetails batchDetails, Date plannedStartDate);
 
+	public List<BatchProgress> findAllByPlannedStartDate(Date plannedStartDate);
+
 	public List<BatchProgress> findByBatchDetailsAndPlannedStartDateGreaterThanOrderByPlannedStartDate(
 			BatchDetails batchDetails, Date plannedStartDate);
 
@@ -46,4 +48,17 @@ public interface BatchProgressRepository extends JpaRepository<BatchProgress, In
 			+ "b1.status = (select max(status) from tsh.batch_progress b3 where b3.topic_id = b1.topic_id and b3.batch_detail_id = :batchDetailId) "
 			+ "and b1.topic_id is not null and b1.batch_detail_id = :batchDetailId", nativeQuery = true)
 	public List<BatchProgress> findAllUniqueBatchProgressWithLastStatus(@Param("batchDetailId") int batchDetailId);
+
+	@Query(value = "select * from tsh.batch_progress b where b.id in "
+			+ "(select max(b2.id) from batch_progress b2 where (b2.planned_startdate >= :plannedDate or b2.startdate >= :plannedDate) "
+			+ "and b2.teacher_id = :teacherId group by b2.batch_detail_id);", nativeQuery = true)
+	public List<BatchProgress> findMaxRecordsForTeacherWithPlannedStartDateOrStartDateGreaterThan(
+			@Param("plannedDate") Date plannedDate, @Param("teacherId") int teacherId);
+
+	@Query(value = "select * from tsh.batch_progress b where b.id in "
+			+ "(select max(b2.id) from batch_progress b2 where (b2.planned_startdate >= :plannedDate or b2.startdate >= :plannedDate) "
+			+ "group by b2.batch_detail_id);", nativeQuery = true)
+	public List<BatchProgress> findAllMaxRecordsWithPlannedStartDateOrStartDateGreaterThan(
+			@Param("plannedDate") Date plannedDate);
+
 }

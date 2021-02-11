@@ -37,15 +37,15 @@ public class ProcessController {
 		status.setPercetCompleted(0);
 		status.setStepName("Initiating Data Import from Outlook...");
 
-		new Thread(() -> {
-			try {
+//		new Thread(() -> {
+		try {
 
-				dataImportService.importDataFromOutlook(p.getId());
-			} catch (Exception e) {
-				logger.error(e.getLocalizedMessage());
-				e.printStackTrace();
-			}
-		}).start();
+			dataImportService.importDataFromOutlook(p.getId());
+		} catch (Exception e) {
+			logger.error(e.getLocalizedMessage());
+			e.printStackTrace();
+		}
+//		}).start();
 
 		logger.info("Concurrent process triggred");
 		return status;

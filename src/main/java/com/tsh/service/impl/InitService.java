@@ -3,6 +3,8 @@ package com.tsh.service.impl;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +37,7 @@ public class InitService implements IInitService {
 	private ITopicService topicService;
 	@Autowired
 	private IGeneralService generalService;
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Override
 	public boolean startInitialisation() throws TSHException {
@@ -69,9 +72,10 @@ public class InitService implements IInitService {
 	@Override
 	public void createAllBatchProgress() throws TSHException {
 		int weekDay = TshUtil.getTodaysWeekDay();
-		List<BatchDetails> batches = batchDetailsRepo.findAllBatchesForWeekday(weekDay);
+		List<BatchDetails> batches = batchDetailsRepo.findAllActiveBatchesForWeekday(weekDay);
 		TopicStatus planned = topicService.getTopicStatusByStatus("Planned");
-		Term term = generalService.getCurrentTerm().orElse(null);
+		Term term = generalService.getCurrentTerm().orElse(new Term(0));
+		logger.info("Curent Term is {}", term.getTerm());
 		int weekNum = TshUtil.getWeekNUmberPost(term.getStartDate());
 		Week week = generalService.getWeekByWeekNumber(weekNum);
 		List<BatchProgress> newBatchProgress = new ArrayList<>();
@@ -97,9 +101,16 @@ public class InitService implements IInitService {
 
 	private Topics getTopicFor(BatchDetails batch, Term term, Week week) {
 
-		Topics topic = topicService.getForGradeCourseTermAndWeek(batch.getGrade(), batch.getCourse(), term, week);
-
+		Topics topic = null;
+		try {
+			topic = topicService.getForGradeCourseTermAndWeek(batch.getGrade(), batch.getCourse(), term, week);
+		} catch (Exception e) {
+			logger.error("Exception while retreiving topics for grade : {}, Course : {} , Term : {} , Week : {}",
+					batch.getGrade().getGrade(), batch.getCourse().getShortDescription(), term.getTerm(),
+					week.getWeekNumber());
+			e.printStackTrace();
+			throw e;
+		}
 		return topic;
 	}
-
 }

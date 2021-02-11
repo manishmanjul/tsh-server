@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +26,7 @@ import com.tsh.entities.Feedback;
 import com.tsh.entities.FeedbackCategory;
 import com.tsh.entities.Student;
 import com.tsh.entities.StudentBatches;
+import com.tsh.entities.User;
 import com.tsh.exception.TSHException;
 import com.tsh.library.dto.DeleteFeedbackRequest;
 import com.tsh.library.dto.FeedbackCategoryTO;
@@ -35,6 +37,7 @@ import com.tsh.library.dto.SimpleIDRequest;
 import com.tsh.library.dto.StudentFeedbackRequestTO;
 import com.tsh.library.dto.StudentFeedbackResponseTO;
 import com.tsh.library.dto.TopicsTO;
+import com.tsh.library.dto.UserPrinciple;
 import com.tsh.service.IBatchService;
 import com.tsh.service.IFeedbackService;
 import com.tsh.service.IProgressService;
@@ -91,6 +94,9 @@ public class FeedbackController {
 	public FeedbackResponseTO submitFeedback(@RequestBody StudentFeedbackRequestTO studentFeedback) {
 
 		BatchDetails batchDetails;
+		UserPrinciple principle = (UserPrinciple) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		User loggedinUser = principle.getUser();
+
 		try {
 			batchDetails = batchService.getBatchDetailsById(studentFeedback.getBatchDetailId());
 		} catch (TSHException e) {
@@ -124,7 +130,7 @@ public class FeedbackController {
 
 		// Manage Feedback for all Students.
 		try {
-			feedbackService.processStudentFeedback(batchDetails, studentFeedback);
+			feedbackService.processStudentFeedback(batchDetails, studentFeedback, loggedinUser);
 		} catch (TSHException e) {
 			return new FeedbackResponseTO(
 					ResponseMessage.UNABLE_TO_UPDATE_STUDENT_FEEDBACK.appendMessage(e.getMessage()));
@@ -133,7 +139,7 @@ public class FeedbackController {
 		logger.info("Refreshing batch details post feedback update. Batch Id : {}", batchDetails.getId());
 		FeedbackResponseTO response = new FeedbackResponseTO();
 		try {
-			response.setSchedule(batchService.getBatchDetails(batchDetails));
+			response.setSchedule(batchService.getBatchInfoToRender(batchDetails));
 		} catch (TSHException | ParseException e) {
 			return new FeedbackResponseTO(
 					ResponseMessage.UNABLE_TO_UPDATE_STUDENT_FEEDBACK.appendMessage(e.getMessage()));

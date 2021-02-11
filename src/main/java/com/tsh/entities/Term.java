@@ -1,5 +1,6 @@
 package com.tsh.entities;
 
+import java.text.ParseException;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -11,6 +12,8 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.tsh.utility.TshUtil;
 
 @Entity
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
@@ -37,6 +40,12 @@ public class Term extends BaseEntity {
 		this();
 		this.term = term;
 		this.description = "Term " + term;
+		try {
+			this.startDate = TshUtil.getFirstDayOfCurrentWeek();
+			this.endDate = TshUtil.getLastDayOfCurrentWeek();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public int getId() {

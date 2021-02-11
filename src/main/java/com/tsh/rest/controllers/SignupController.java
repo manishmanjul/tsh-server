@@ -8,7 +8,10 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,10 +21,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tsh.entities.Role;
 import com.tsh.entities.Teacher;
 import com.tsh.entities.User;
-import com.tsh.exception.TSHException;
 import com.tsh.library.dto.ResponseMessage;
 import com.tsh.library.dto.SimpleStringRequest;
 import com.tsh.library.dto.TeacherTO;
+import com.tsh.library.dto.UserPrinciple;
 import com.tsh.library.dto.UserTO;
 import com.tsh.service.ILoginService;
 import com.tsh.service.ITeacherService;
@@ -39,7 +42,13 @@ public class SignupController {
 	@PostMapping
 	public ResponseEntity<?> registerUser(@RequestBody UserTO newUser) throws Exception {
 
-		Role role = validateAndGetRole(newUser.getRole());
+		Role role = null;
+		if (newUser.getName().equalsIgnoreCase("Admin")) {
+			role = validateAndGetRole("Administrator"); // Get Admin role
+		} else {
+			role = validateAndGetRole(newUser.getRole());
+		}
+
 		if (role == null) {
 			return ResponseEntity.ok(ResponseMessage.INVALID_ROLE);
 		}
@@ -65,12 +74,12 @@ public class SignupController {
 				teacher = teacherServive.findByName(newUser.getTeacherName());
 			}
 
-			if (teacher == null) {
-				throw new TSHException("Teacher Not Found");
-			}
+			userToRegister.setFirstLogin(true);
 			userToRegister = loginService.addNewUser(userToRegister);
-			teacher.setUser(userToRegister);
-			teacherServive.updateTeacher(teacher);
+			if (teacher != null) {
+				teacher.setUser(userToRegister);
+				teacherServive.updateTeacher(teacher);
+			}
 		} catch (Exception e) {
 			return ResponseEntity.ok(ResponseMessage.FAILED_TO_REGISTER.appendMessage(e.getMessage()));
 		}
@@ -85,6 +94,11 @@ public class SignupController {
 		ModelMapper mapper = new ModelMapper();
 		List<TeacherTO> teachersTO = teachers.stream().map(t -> mapper.map(t, TeacherTO.class))
 				.collect(Collectors.toList());
+		// Add an entry for Admin
+		TeacherTO admin = new TeacherTO();
+		admin.setId(999999);
+		admin.setTeacherName("Admin");
+		teachersTO.add(admin);
 		return teachersTO;
 	}
 
@@ -101,6 +115,35 @@ public class SignupController {
 			response = ResponseMessage.GENERAL_SUCCESS;
 		} else {
 			response = ResponseMessage.GENERAL_FAIL;
+		}
+		return response;
+	}
+
+	@PostMapping("/changePass")
+	public ResponseEntity<String> changePassword(@RequestBody SimpleStringRequest request) {
+		ResponseEntity<String> response = null;
+
+		UserPrinciple principle = (UserPrinciple) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		User user = principle.getUser();
+		logger.info("Request to change password for user {}", user.getName());
+		user.setPassword(request.getRequest());
+		user.setFirstLogin(false);
+
+		user = loginService.updateUser(user);
+
+		if (user == null) {
+			logger.error("Unable to change password.");
+			HttpHeaders headers = new HttpHeaders();
+			headers.set("statusCode", "204");
+			headers.set("message", "Unable to change password");
+			response = new ResponseEntity<String>("Unable to change password", headers,
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		} else {
+			logger.info("Password successfully changed.");
+			HttpHeaders headers = new HttpHeaders();
+			headers.set("statusCode", "202");
+			headers.set("message", "Password changed");
+			response = new ResponseEntity<>("Password changed", headers, HttpStatus.ACCEPTED);
 		}
 		return response;
 	}

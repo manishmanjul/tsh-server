@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -24,6 +25,7 @@ import com.tsh.entities.StudentFeedback;
 import com.tsh.entities.Teacher;
 import com.tsh.entities.Term;
 import com.tsh.entities.Topics;
+import com.tsh.entities.User;
 import com.tsh.entities.Week;
 import com.tsh.exception.TSHException;
 import com.tsh.library.dto.DeleteFeedbackRequest;
@@ -35,6 +37,7 @@ import com.tsh.library.dto.StudentFeedbackRequestTO;
 import com.tsh.library.dto.StudentRequestTO;
 import com.tsh.library.dto.TeacherTO;
 import com.tsh.library.dto.TopicsTO;
+import com.tsh.library.dto.UserTO;
 import com.tsh.repositories.FeedbackCategoryRepository;
 import com.tsh.repositories.FeedbackRepository;
 import com.tsh.repositories.StudentFeedbackRepository;
@@ -145,17 +148,6 @@ public class FeedbackService implements IFeedbackService {
 	}
 
 	@Override
-	public Map<String, String> getDummyFeedbackMap() {
-		Map<String, String> feedbackMap = new HashMap<>();
-		feedbackMap.put("Revision", "No feedback available");
-		feedbackMap.put("Classwork", "No feedback available");
-		feedbackMap.put("Homework", "No feedback available");
-		feedbackMap.put("Assessment", "No feedback available");
-
-		return feedbackMap;
-	}
-
-	@Override
 	public List<FeedbackCategory> getAllActiveFeedbackCategories(int grade) {
 		List<FeedbackCategory> returnList = null;
 
@@ -178,19 +170,21 @@ public class FeedbackService implements IFeedbackService {
 	}
 
 	@Override
-	public void processStudentFeedback(BatchDetails batchDetails, StudentFeedbackRequestTO inputData)
+	public void processStudentFeedback(BatchDetails batchDetails, StudentFeedbackRequestTO inputData, User loggedinUser)
 			throws TSHException {
 
 		logger.info("Initiating process feedback for requested students.");
 		logger.info("Validating Teacher details");
-		Teacher updatedBy = teacherService.findById(inputData.getUpdatedById());
-		if (updatedBy == null) {
-			logger.warn(
-					"No Teacher found with ID : {} - Select a Valid teacher and reinitiate. Aborting ProcessFeedback.",
-					inputData.getUpdatedById());
-			throw new TSHException("No Teacher found with ID : " + inputData.getUpdatedById()
-					+ " - Select a Valid teacher and reinitiate. Aborting ProcessFeedback.");
-		}
+
+		Teacher teacher = teacherService.findById(inputData.getUpdatedById());
+
+//		if (updatedBy == null) {
+//			logger.warn(
+//					"No Teacher found with ID : {} - Select a Valid teacher and reinitiate. Aborting ProcessFeedback.",
+//					inputData.getUpdatedById());
+//			throw new TSHException("No Teacher found with ID : " + inputData.getUpdatedById()
+//					+ " - Select a Valid teacher and reinitiate. Aborting ProcessFeedback.");
+//		}
 
 		// There can be multiple students for same feedback. Update this feedback for
 		// all.
@@ -224,7 +218,8 @@ public class FeedbackService implements IFeedbackService {
 				studFeedback.setStudentBatches(studBatch);
 				studFeedback.setFeedback(feedback);
 				studFeedback.setFeedbackDate(TshUtil.getCurrentDate());
-				studFeedback.setTeacher(updatedBy);
+				studFeedback.setTeacher(teacher);
+				studFeedback.setUser(loggedinUser);
 				studFeedback.setTopic(topic);
 				studFeedback.setFeedbackText(feedbackTO.getComment());
 
@@ -266,9 +261,15 @@ public class FeedbackService implements IFeedbackService {
 			List<StudentFeedback> studFeedbacks = studentFeedbackRepo
 					.findByStudentBatchesAndTopicIdOrderByTeacher(studentBatches, topic.getId());
 			for (StudentFeedback feedback : studFeedbacks) {
-				TeacherTO teacherTO = mapper.map(feedback.getTeacher(), TeacherTO.class);
+				TeacherTO teacherTO = null;
+				UserTO userTO = null;
+				if (feedback.getTeacher() != null)
+					teacherTO = mapper.map(feedback.getTeacher(), TeacherTO.class);
+				if (feedback.getUser() != null)
+					userTO = mapper.map(feedback.getUser(), UserTO.class);
 				provider = new FeedbackProvider();
 				provider.setTeacher(teacherTO);
+				provider.setUserTO(userTO);
 				provider.setFeedbackDate(feedback.getFeedbackDate());
 				provider.setStudentBatch(studentBatches);
 
@@ -405,5 +406,20 @@ public class FeedbackService implements IFeedbackService {
 		ModelMapper mapper = new ModelMapper();
 		fCategoryTO = mapper.map(fCategory, FeedbackCategoryTO.class);
 		return fCategoryTO;
+	}
+
+	@Override
+	public List<FeedbackCategoryTO> getEmptyFeedback(int grade) {
+		List<FeedbackCategoryTO> returnList = new ArrayList<>();
+		List<FeedbackCategory> categoryList = getAllActiveFeedbackCategories(grade);
+
+		returnList = categoryList.stream().map(c -> {
+			FeedbackCategoryTO catTO = new FeedbackCategoryTO();
+			catTO.setDescription(c.getDescription());
+			catTO.setFeedbacks(null);
+			return catTO;
+		}).collect(Collectors.toList());
+
+		return returnList;
 	}
 }

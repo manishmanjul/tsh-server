@@ -14,6 +14,7 @@ import com.tsh.entities.Teacher;
 import com.tsh.entities.Term;
 import com.tsh.entities.TimeSlot;
 import com.tsh.entities.TrainingType;
+import com.tsh.entities.User;
 import com.tsh.exception.TSHException;
 import com.tsh.library.dto.ScheduleTO;
 import com.tsh.library.dto.TopicsTO;
@@ -34,14 +35,16 @@ public interface IBatchService extends TshService {
 
 	Optional<Batch> getBatch(TimeSlot timeSlot);
 
-	List<ScheduleTO> getSchedulesFor(Teacher teacher) throws ParseException, TSHException;
+	List<ScheduleTO> getSchedulesFor(Teacher teacher, User loggedInUser) throws ParseException, TSHException;
 
 	public List<TopicsTO> getBAtchTopics(BatchDetails batch);
 
-	ScheduleTO getBatchDetails(BatchDetails batchDetails) throws TSHException, ParseException;
+	ScheduleTO getBatchInfoToRender(BatchDetails batchDetails) throws TSHException, ParseException;
 
 	BatchDetails getBatchDetailsById(int id) throws TSHException;
 
-	public List<BatchDetails> getAllBatchDetailsForToday();
+	public List<BatchDetails> getAllBatchDetailsOn(String batchDate) throws ParseException;
+
+	public List<BatchDetails> getAllBatchDetailsForUser(User loggedInUser, Teacher teacher) throws TSHException;
 
 }

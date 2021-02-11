@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import com.tsh.entities.Teacher;
+import com.tsh.entities.TeacherDetails;
 import com.tsh.entities.User;
 
 @Service
@@ -22,4 +23,6 @@ public interface ITeacherService extends TshService {
 	List<Teacher> findAllTeachers();
 
 	public Optional<Teacher> getTeachers(String teacher);
+
+	public TeacherDetails getTeacherDetails(Teacher teacher);
 }

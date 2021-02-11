@@ -81,10 +81,13 @@ public class TopicService implements ITopicService {
 		return topicProgressRepo.saveAll(progressList);
 	}
 
-	@Cacheable("TshCache")
+	/**
+	 * This method will only return topics for the current term.
+	 */
 	@Override
 	public List<Topics> getAllActiveTopicsForCourseAndGrade(Course course, Grades grade) {
-		return topicsRepo.findAllByCourseAndGradeAndActive(course, grade, true);
+		Term term = generalService.getCurrentTerm().orElse(new Term(0));
+		return topicsRepo.findAllByCourseAndGradeAndTermAndActive(course, grade, term, true);
 	}
 
 	/**
@@ -296,6 +299,11 @@ public class TopicService implements ITopicService {
 
 	@Override
 	public Topics getForGradeCourseTermAndWeek(Grades grade, Course course, Term term, Week week) {
-		return topicsRepo.findByGradeAndCourseAndTermAndWeekAndActive(grade, course, term, week, true);
+		List<Topics> topicList = topicsRepo.findByGradeAndCourseAndTermAndWeekAndActive(grade, course, term, week,
+				true);
+		if (topicList.size() > 0)
+			return topicList.get(0);
+		else
+			return null;
 	}
 }

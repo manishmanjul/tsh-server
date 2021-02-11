@@ -37,9 +37,9 @@ public class StudentController {
 	public List<StudentTO> returnAllStudentsForUser() {
 		UserPrinciple principle = (UserPrinciple) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		Teacher teacher = teacherService.findByUser(principle.getUser());
-		logger.info("Return all active students for user : {} : {}", principle.getUser(), teacher.getTeacherName());
+		logger.info("Return all active students for user : {}", principle.getUser());
 
-		return studentService.getStudentsForTeacher(teacher);
+		return studentService.getAllActiveStudentsForTeacher(teacher, principle.getUser());
 	}
 
 	@PostMapping("/markAbsent")

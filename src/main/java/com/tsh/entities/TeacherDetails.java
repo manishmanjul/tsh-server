@@ -1,5 +1,6 @@
 package com.tsh.entities;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -32,6 +33,12 @@ public class TeacherDetails extends BaseEntity {
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "course_id")
 	private Course course;
+
+	@Column(name = "bg_color")
+	private String bgColor;
+
+	@Column(name = "font_color")
+	private String fontColor;
 
 	public TeacherDetails() {
 	}
@@ -67,4 +74,21 @@ public class TeacherDetails extends BaseEntity {
 	public void setCourse(Course course) {
 		this.course = course;
 	}
+
+	public String getBgColor() {
+		return bgColor;
+	}
+
+	public void setBgColor(String bgColor) {
+		this.bgColor = bgColor;
+	}
+
+	public String getFontColor() {
+		return fontColor;
+	}
+
+	public void setFontColor(String fontColor) {
+		this.fontColor = fontColor;
+	}
+
 }

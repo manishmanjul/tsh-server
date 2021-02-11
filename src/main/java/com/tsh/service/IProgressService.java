@@ -1,5 +1,7 @@
 package com.tsh.service;
 
+import java.text.ParseException;
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -8,6 +10,7 @@ import com.tsh.entities.BatchDetails;
 import com.tsh.entities.BatchProgress;
 import com.tsh.entities.Course;
 import com.tsh.entities.Student;
+import com.tsh.entities.Teacher;
 import com.tsh.entities.TopicProgress;
 import com.tsh.entities.TopicStatus;
 import com.tsh.exception.TSHException;
@@ -24,6 +27,14 @@ public interface IProgressService extends TshService {
 	public List<BatchProgress> getAllBatchProgress(BatchDetails batch);
 
 	public BatchProgress getBatchProgressAsOfToday(BatchDetails batch) throws TSHException;
+
+	public List<BatchProgress> getAllBatchProgressPlannedOn(Date plannedStartDate);
+
+	public List<BatchProgress> getAllBatchProgressPlannedOn(String plannedStartDate) throws ParseException;
+
+	public List<BatchProgress> getAllBatchProgressTodayAndAfter() throws TSHException;
+
+	public List<BatchProgress> getAllBatchProgressTodayAndAfter(Teacher teacher) throws TSHException;
 
 	public BatchProgress getNextPlannedBatchProgress(BatchDetails batch) throws TSHException;
 
@@ -43,4 +54,5 @@ public interface IProgressService extends TshService {
 			StudentFeedbackRequestTO inputData) throws TSHException;
 
 	public List<TopicsTO> getAllTopicsProgress(Student student, Course course);
+
 }
