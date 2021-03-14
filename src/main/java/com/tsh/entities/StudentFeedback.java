@@ -38,6 +38,9 @@ public class StudentFeedback extends BaseEntity {
 	@Column(name = "feedback_date")
 	private Date feedbackDate;
 
+	@Column(name = "update_date", insertable = false, updatable = false)
+	private Date updateDate;
+
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "teacher_id")
 	private Teacher teacher;
@@ -45,6 +48,14 @@ public class StudentFeedback extends BaseEntity {
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "user_id")
 	private User user;
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "update_user")
+	private User updatedBy;
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "topic_progress_id")
+	private TopicProgress topicProgress;
 
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "topic_id")
@@ -115,6 +126,30 @@ public class StudentFeedback extends BaseEntity {
 
 	public void setUser(User user) {
 		this.user = user;
+	}
+
+	public TopicProgress getTopicProgress() {
+		return topicProgress;
+	}
+
+	public void setTopicProgress(TopicProgress topicProgress) {
+		this.topicProgress = topicProgress;
+	}
+
+	public User getUpdatedBy() {
+		return updatedBy;
+	}
+
+	public void setUpdatedBy(User updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+
+	public Date getUpdateDate() {
+		return updateDate;
+	}
+
+	public void setUpdateDate(Date updateDate) {
+		this.updateDate = updateDate;
 	}
 
 	@Override

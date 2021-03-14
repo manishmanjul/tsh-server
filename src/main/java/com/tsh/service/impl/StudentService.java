@@ -111,6 +111,7 @@ public class StudentService implements IStudentService {
 				studentTO.setId(studBatch.getId());
 				studentTO.setName(studBatch.getStudent().getStudentName());
 				studentTO.setGrade(studBatch.getBatchDetails().getGrade().getGrade() + "");
+				studentTO.setTeacher(studBatch.getBatchDetails().getTeacher().getTeacherName());
 				studentTO.setCourse(studBatch.getCourse().getShortDescription());
 				studentTOList.add(studentTO);
 			}
@@ -168,6 +169,17 @@ public class StudentService implements IStudentService {
 	@Override
 	public void saveAllStudents(List<Student> students) {
 		studentRepo.saveAll(students);
+	}
+
+	@Override
+	public List<StudentBatches> getAllActiveBatches(Student student) {
+		return studentBatchesRepo.findByStudent(student);
+	}
+
+	@Override
+	public List<StudentBatches> getAllActiveStudentBatches(BatchDetails batchDetails) {
+
+		return studentBatchesRepo.findAllByBatchDetailsAndEndDateIsNull(batchDetails);
 	}
 
 }

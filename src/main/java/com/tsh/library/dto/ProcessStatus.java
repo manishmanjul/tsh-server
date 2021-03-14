@@ -9,6 +9,8 @@ public class ProcessStatus {
 	private int step;
 	private String stepName;
 	private int percetCompleted;
+	private String controlIdentifier;
+	private String messageString;
 
 	public ProcessStatus(int status) {
 		this.status = TshUtil.statusToString(status);
@@ -66,4 +68,19 @@ public class ProcessStatus {
 		this.psCode = psCode;
 	}
 
+	public String getControlIdentifier() {
+		return controlIdentifier;
+	}
+
+	public void setControlIdentifier(String controlIdentifier) {
+		this.controlIdentifier = controlIdentifier;
+	}
+
+	public String getMessageString() {
+		return messageString;
+	}
+
+	public void setMessageString(String messageString) {
+		this.messageString = messageString;
+	}
 }

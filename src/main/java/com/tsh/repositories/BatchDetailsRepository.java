@@ -27,4 +27,6 @@ public interface BatchDetailsRepository extends JpaRepository<BatchDetails, Inte
 	public BatchDetails findById(int id);
 
 	public List<BatchDetails> findByIdIn(List<Integer> idList);
+
+	public List<BatchDetails> findAllByActive(boolean active);
 }

@@ -266,7 +266,7 @@ public class BatchService implements IBatchService {
 
 	@Cacheable("TshCache")
 	private List<StudentTO> fetchAllStudentsData(BatchDetails batch) {
-		List<StudentBatches> students = studentService.getStudentBatches(batch);
+		List<StudentBatches> students = studentService.getAllActiveStudentBatches(batch);
 		List<StudentTO> studentList = new ArrayList<>();
 
 		for (StudentBatches studentBatch : students) {
@@ -394,6 +394,11 @@ public class BatchService implements IBatchService {
 
 		this.batchDetails = batchDetailRepo.findByActive(true);
 		return this.batchDetails;
+	}
+
+	@Override
+	public List<BatchDetails> getAllActiveBatchDetails() {
+		return batchDetailRepo.findAllByActive(true);
 	}
 
 }

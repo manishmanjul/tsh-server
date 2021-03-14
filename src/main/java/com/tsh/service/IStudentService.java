@@ -31,6 +31,8 @@ public interface IStudentService extends TshService {
 
 	List<StudentBatches> getAllActiveStudentBatches();
 
+	List<StudentBatches> getAllActiveStudentBatches(BatchDetails batchDetails);
+
 	public List<StudentBatches> getAllActiveStudentBatches(Teacher teacher);
 
 	Student getStudentByNameAndGrade(String name, Grades grade);
@@ -50,5 +52,7 @@ public interface IStudentService extends TshService {
 	public List<StudentBatches> getAllStudentBatchesWithBatchDetailsStatus(boolean status);
 
 	public boolean isEnrolledToABatch(Student student);
+
+	public List<StudentBatches> getAllActiveBatches(Student student);
 
 }

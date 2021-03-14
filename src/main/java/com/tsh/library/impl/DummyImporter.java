@@ -1,5 +1,6 @@
 package com.tsh.library.impl;
 
+import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -19,6 +20,24 @@ public class DummyImporter implements DataImporter {
 	public List<ImportItem> importData(Process parent) throws TSHException {
 		logger.info("This is a dummy importer. Nothing to Import. Plug in a actual importer implementation.");
 		return null;
+	}
+
+	@Override
+	public void setStartDate(Date startDate) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void setEndDate(Date endDate) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void setStartAndEndDates(Date startDate, Date endDate) {
+		// TODO Auto-generated method stub
+
 	}
 
 }

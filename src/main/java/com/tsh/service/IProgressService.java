@@ -50,7 +50,9 @@ public interface IProgressService extends TshService {
 
 	public TopicProgress addTopicProgress(Student student, TopicProgress topicProgress) throws TSHException;
 
-	public TopicProgress manageCurrentAndNextTopicProgress(BatchDetails batchDetails,
+	public TopicProgress getTopicProgress(int id);
+
+	public List<TopicProgress> manageCurrentAndNextTopicProgress(BatchDetails batchDetails,
 			StudentFeedbackRequestTO inputData) throws TSHException;
 
 	public List<TopicsTO> getAllTopicsProgress(Student student, Course course);

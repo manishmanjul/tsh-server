@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import com.tsh.entities.TimeSlot;
@@ -183,6 +184,38 @@ public class TshUtil {
 		return cal.get(Calendar.DAY_OF_WEEK);
 	}
 
+	public static String getWeekDayAsString(Date dt) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(dt);
+
+		int day = cal.get(Calendar.DAY_OF_WEEK);
+		String dayString = "";
+		switch (day) {
+		case 1:
+			dayString = "Sunday";
+			break;
+		case 2:
+			dayString = "Monday";
+			break;
+		case 3:
+			dayString = "Tuesday";
+			break;
+		case 4:
+			dayString = "Wednesday";
+			break;
+		case 5:
+			dayString = "Thursday";
+			break;
+		case 6:
+			dayString = "Friday";
+			break;
+		case 7:
+			dayString = "Saturday";
+			break;
+		}
+		return dayString;
+	}
+
 	public static int getWeekDayOf(String dt) throws ParseException {
 		DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
 		Date ofDate = formatter.parse(dt);
@@ -220,6 +253,14 @@ public class TshUtil {
 		return returnDate;
 	}
 
+	public static String toString(Date input) throws TSHException {
+		DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
+		String returnDate = null;
+
+		returnDate = formatter.format(input);
+		return returnDate;
+	}
+
 	public static Date formatOz(Date input) throws TSHException {
 		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
 		Date returnDate = null;
@@ -234,6 +275,10 @@ public class TshUtil {
 
 	public static String formatTimeToHHmm(Time time) {
 		return time.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm a"));
+	}
+
+	public static String formatTimeToHHmm24Hr(Time time) {
+		return time.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"));
 	}
 
 	public static Date toDate(String dt) throws ParseException {
@@ -259,6 +304,16 @@ public class TshUtil {
 		statusMap.put("5", "Failed");
 
 		return statusMap.get("" + status);
+	}
+
+	public static Date convertToAEST(Date dt) throws ParseException {
+		Date returnDate = null;
+		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm a", Locale.ENGLISH);
+		formatter.setTimeZone(TimeZone.getTimeZone("Australia/Sydney"));
+		returnDate = formatter.parse(formatter.format(dt));
+
+		return returnDate;
+
 	}
 
 }

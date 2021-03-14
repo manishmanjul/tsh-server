@@ -44,7 +44,7 @@ public class DashboardService implements IDashboardService {
 		ModelMapper mapper = new ModelMapper();
 		logger.info("Convert all batchdetails to dashboard items");
 		for (BatchDetails batchDetails : batchDetailsList) {
-			List<StudentBatches> studentBatches = studentService.getStudentBatches(batchDetails);
+			List<StudentBatches> studentBatches = studentService.getAllActiveStudentBatches(batchDetails);
 			DashboardItems item = new DashboardItems();
 			item.setBatchDetailId(batchDetails.getId());
 			item.setStartTime(TshUtil.formatTimeToHHmm(batchDetails.getBatch().getTimeSlot().getStartTime()));

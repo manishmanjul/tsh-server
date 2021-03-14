@@ -26,6 +26,7 @@ import com.tsh.entities.Feedback;
 import com.tsh.entities.FeedbackCategory;
 import com.tsh.entities.Student;
 import com.tsh.entities.StudentBatches;
+import com.tsh.entities.TopicProgress;
 import com.tsh.entities.User;
 import com.tsh.exception.TSHException;
 import com.tsh.library.dto.DeleteFeedbackRequest;
@@ -37,11 +38,13 @@ import com.tsh.library.dto.SimpleIDRequest;
 import com.tsh.library.dto.StudentFeedbackRequestTO;
 import com.tsh.library.dto.StudentFeedbackResponseTO;
 import com.tsh.library.dto.TopicsTO;
+import com.tsh.library.dto.UpdateFeedbackRequest;
 import com.tsh.library.dto.UserPrinciple;
 import com.tsh.service.IBatchService;
 import com.tsh.service.IFeedbackService;
 import com.tsh.service.IProgressService;
 import com.tsh.service.IStudentService;
+import com.tsh.service.ITopicService;
 
 @RestController
 @RequestMapping("/tsh/feedback")
@@ -55,6 +58,8 @@ public class FeedbackController {
 	private IProgressService progressService;
 	@Autowired
 	private IStudentService studentService;
+	@Autowired
+	private ITopicService topicService;
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@GetMapping("/category/{grade}/{active}")
@@ -121,8 +126,9 @@ public class FeedbackController {
 		}
 
 		// Manage Topic Progress.
+		List<TopicProgress> currTopicProgess;
 		try {
-			progressService.manageCurrentAndNextTopicProgress(batchDetails, studentFeedback);
+			currTopicProgess = progressService.manageCurrentAndNextTopicProgress(batchDetails, studentFeedback);
 		} catch (TSHException e) {
 			return new FeedbackResponseTO(
 					ResponseMessage.UNABLE_TO_UPDATE_TOPIC_PROGRESS.appendMessage(e.getMessage()));
@@ -130,7 +136,7 @@ public class FeedbackController {
 
 		// Manage Feedback for all Students.
 		try {
-			feedbackService.processStudentFeedback(batchDetails, studentFeedback, loggedinUser);
+			feedbackService.processStudentFeedback(batchDetails, studentFeedback, loggedinUser, currTopicProgess);
 		} catch (TSHException e) {
 			return new FeedbackResponseTO(
 					ResponseMessage.UNABLE_TO_UPDATE_STUDENT_FEEDBACK.appendMessage(e.getMessage()));
@@ -172,12 +178,43 @@ public class FeedbackController {
 	@PostMapping("/deleteFeedback")
 	public ResponseMessage deleteFeedback(@RequestBody DeleteFeedbackRequest request) {
 		ResponseMessage response = null;
+		UserPrinciple principle = (UserPrinciple) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		User loggedinUser = principle.getUser();
 		logger.info("Deleting Feedback for topic id: {}", request.getTopicId());
 		try {
-			feedbackService.deleteFeedback(request);
+			feedbackService.deleteFeedback(request, loggedinUser);
 			response = ResponseMessage.GENERAL_SUCCESS;
 		} catch (Exception e) {
 			response = ResponseMessage.GENERAL_FAIL.appendMessage(e.getLocalizedMessage());
+		}
+		return response;
+	}
+
+	@PostMapping("/updateStudentFeedback")
+	public ResponseEntity<String> updateStudentFeedback(@RequestBody UpdateFeedbackRequest request) {
+		ResponseEntity<String> response = null;
+		UserPrinciple principle = (UserPrinciple) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		User loggedinUser = principle.getUser();
+
+		logger.info("/updateStudentFeedback called for {} topic {}", request.getStudentName(),
+				request.getTopicChapter() + " -" + request.getTopicName() + " - " + request.getTopicDescription());
+		StudentBatches studentBatches = studentService.getStudentBatchesById(request.getStudentBatchId());
+		try {
+			feedbackService.updateAndAddStudentFeedback(request, studentBatches, loggedinUser);
+			HttpHeaders headers = new HttpHeaders();
+			headers.set("statusCode", "504");
+			headers.set("message", "Feedbacks updated...");
+			response = new ResponseEntity<>("Feedback updated.", headers, HttpStatus.ACCEPTED);
+			logger.info("Feedbacks successfully updated...");
+
+		} catch (TSHException e) {
+			e.printStackTrace();
+			HttpHeaders headers = new HttpHeaders();
+			headers.set("statusCode", "201");
+			headers.set("message", "Internal Server Error. Could notupdate feedback.");
+			response = new ResponseEntity<>("Internal Server Error. Could not update feedbacks.", headers,
+					HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error("Feedbacks could not be updated due to above error.");
 		}
 		return response;
 	}

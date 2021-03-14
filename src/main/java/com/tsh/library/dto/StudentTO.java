@@ -11,6 +11,7 @@ public class StudentTO {
 	private String name;
 	private String course;
 	private String grade;
+	private String teacher;
 	private String previousTopic;
 	private int feedbackId;
 	private Map<String, FeedbackCategoryTO> feedbacks = new HashMap<>();
@@ -100,6 +101,14 @@ public class StudentTO {
 
 	public void setId(int id) {
 		this.id = id;
+	}
+
+	public String getTeacher() {
+		return teacher;
+	}
+
+	public void setTeacher(String teacher) {
+		this.teacher = teacher;
 	}
 
 }

@@ -1,11 +1,16 @@
 package com.tsh.service.impl;
 
 import java.sql.Time;
+import java.text.ParseException;
+import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +36,10 @@ import com.tsh.entities.Topics;
 import com.tsh.entities.TrainingType;
 import com.tsh.exception.TSHException;
 import com.tsh.library.DataImporter;
+import com.tsh.library.dto.ImportItemTO;
+import com.tsh.library.dto.ImportStatistics;
+import com.tsh.library.dto.ReImportRequest;
+import com.tsh.repositories.IImportStats;
 import com.tsh.repositories.ImportItemRepository;
 import com.tsh.service.IBatchService;
 import com.tsh.service.IDataImportService;
@@ -66,14 +75,18 @@ public class DataImportService implements IDataImportService {
 	@Autowired
 	private IProcessService processService;
 
+	private int importCycle;
+
 	private DataImportService() {
 	}
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Override
-	public String importDataFromOutlook(int parentProcessId) throws Exception {
+	public String importDataFromOutlook(int parentProcessId, Date startDate, Date endDate) throws Exception {
 		Process parent = processService.getProcessById(parentProcessId);
+		this.setImportCycle(getLastImportCycle() + 1);
+		dataImporter.setStartAndEndDates(startDate, endDate);
 		List<ImportItem> items = dataImporter.importData(parent);
 		if (items == null)
 			return "Success";
@@ -105,7 +118,7 @@ public class DataImportService implements IDataImportService {
 			}
 		}
 		items.clear();
-		newStep = processService.closeOldAndCreateNewStep(oldStep, "Finally Cleaning up", stepNum++, 0.25, parent);
+		newStep = processService.closeOldAndCreateNewStep(oldStep, "Finally Cleaning up", stepNum++, 0.66, parent);
 		manageOrphanBatchDetails();
 		if (result == 1) {
 			processService.completeProcessStep(newStep);
@@ -115,52 +128,63 @@ public class DataImportService implements IDataImportService {
 		return (result == 1) ? "Success" : "Error";
 	}
 
-//	@Override
-//	public Future<String> importDataFromOutlookAsync(Process parent) {
-//		return executor.submit(() -> {
-//			importDataFromOutlook(parent);
-//			return null;
-//		});
-//	}
-
 	@Transactional
 	private void manageOrphanBatchDetails() throws TSHException {
-		logger.info("Retrieve all Batch Details that are either orphans or effectvely inactive.");
-		List<BatchDetails> batchDetails = batchService.findAllOrphanBatchDetails();
-		logger.info("{} Orphan or effectively inactive Batch Details found.", batchDetails.size());
+//		logger.info("Retrieve all Batch Details that are either orphans or effectvely inactive.");
 
-		for (BatchDetails batch : batchDetails) {
-			batch.setEndDate(Calendar.getInstance().getTime());
-			batch.setActive(false);
-		}
-		if (batchDetails.size() > 0) {
-			batchService.saveBatchDetails(batchDetails);
-			logger.info("{} orphan Batch Details marked inactive successfully", batchDetails.size());
-		}
-
-		List<StudentBatches> studentBatches = studentService.getAllStudentBatchesWithBatchDetailsStatus(false);
-		logger.info("Ending {} Student Batches with no associated batch.", studentBatches.size());
-		for (StudentBatches studBatch : studentBatches) {
-			studBatch.setEndDate(TshUtil.getCurrentDate());
-		}
-
-		if (studentBatches.size() > 0) {
-			studentService.saveStudentBatches(studentBatches);
-		}
-
+		logger.info("Find all students that was not in import data. Existed since before. The deleted students.. ");
 		List<Student> students = studentService.getAllActiveStudents();
-		List<Student> inActiveStudents = new ArrayList<>();
+		boolean imported = false;
 		for (Student stud : students) {
-			if (!studentService.isEnrolledToABatch(stud)) {
+			List<StudentBatches> studBatches = studentService.getAllActiveBatches(stud);
+			for (StudentBatches studBatch : studBatches) {
+				if (wasImported(studBatch.getStudent().getStudentName(),
+						"Year " + studBatch.getBatchDetails().getGrade().getGrade(),
+						studBatch.getBatchDetails().getCourse().getShortDescription())) {
+					imported = true;
+					continue;
+				} else {
+					imported = false;
+				}
+			}
+			if (!imported) {
 				stud.setActive(false);
-				inActiveStudents.add(stud);
+				for (StudentBatches studBatch : studBatches) {
+					studBatch.setEndDate(TshUtil.getCurrentDate());
+
+					// Add this item to import Item as deleted student. This will be used in
+					// reports.
+					ImportItem deletedItem = new ImportItem();
+					deletedItem.setCycle(getImportCycle());
+					deletedItem.setName(stud.getStudentName());
+					deletedItem.setSubject(studBatch.getCourse().getDescription());
+					deletedItem.setGrade("Year " + stud.getGrade().getGrade());
+					deletedItem.setTeacher(studBatch.getBatchDetails().getTeacher().getTeacherName());
+					deletedItem.setBatchDate(studBatch.getBatchDetails().getBatch().getStartDate());
+					deletedItem.setBatchStartTime(studBatch.getBatchDetails().getBatch().getTimeSlot().getStartTime());
+					deletedItem.setBatchEndTime(studBatch.getBatchDetails().getBatch().getTimeSlot().getEndTime());
+					deletedItem.setStatus(ImportItem.SUCCESS);
+					deletedItem.setImportDate(TshUtil.getCurrentDate());
+					deletedItem.setMessage("Discontinued");
+					importItemRepo.save(deletedItem);
+				}
+
+				studentService.saveStudentBatches(studBatches);
+				studentService.saveStudent(stud);
 			}
 		}
 
-		if (inActiveStudents.size() > 0) {
-			studentService.saveAllStudents(inActiveStudents);
+		logger.info("Handle orphan batch details");
+		List<BatchDetails> batchDetailList = batchService.getAllActiveBatchDetails();
+		for (BatchDetails batchDetails : batchDetailList) {
+			if (studentService.getAllActiveStudentBatches(batchDetails).size() > 0) {
+				continue;
+			} else {
+				batchDetails.setActive(false);
+				batchService.saveBatchDetails(batchDetails);
+			}
 		}
-
+		logger.info("Finished cleanup...");
 	}
 
 	@Transactional
@@ -174,6 +198,7 @@ public class DataImportService implements IDataImportService {
 				break;
 			} catch (Exception e) {
 				item.failed();
+				item.setMessage("Failed - Unknown Reason");
 				saveImportItem(item);
 				logger.error("Item id : " + item.getId());
 				logger.error(e.getMessage());
@@ -183,8 +208,8 @@ public class DataImportService implements IDataImportService {
 			}
 		}
 		if (item.hasFailedImport())
-			return 0;
-		logger.info("{} ready for import.", item.getName());
+			return 1;
+		logger.info("{} ready to import.", item.getName());
 		try {
 			item = save(item);
 			logger.info("{} successfully Imported to the system.", item.getName());
@@ -197,8 +222,9 @@ public class DataImportService implements IDataImportService {
 					item.getId());
 			logger.error(e.getMessage());
 			item.failed();
+			item.setMessage(e.getMessage());
 			saveImportItem(item);
-			return 0;
+			return 1;
 		}
 		return 1;
 	}
@@ -206,6 +232,7 @@ public class DataImportService implements IDataImportService {
 	@Transactional
 	private ImportItem startImport(ImportItem item) {
 		logger.info("Importing item : " + item);
+		item.setCycle(this.getImportCycle());
 		item.readyForImport();
 		item = saveImportItem(item); // Save raw data to import tables
 		return item;
@@ -216,16 +243,16 @@ public class DataImportService implements IDataImportService {
 		item.startImport();
 		item = saveImportItem(item);
 
-		int itemId = item.getId();
 		int batchWeekDay = item.getBatchWeekDay();
 		Time batchStartTime = item.getBatchStartTime();
+		Time batchEndTime = item.getBatchEndTime();
 		int gradeNumber = item.getGradeNumber();
 		String subject = item.getSubject();
 		String teacherName = item.getTeacher();
 
 		if (item.getName().length() == 0 || item.getSubject().length() == 0 || item.getGrade().length() == 0) {
 			logger.info("No Data found in Item : {}. Nothing to Import.", item.getId());
-			item.imported();
+			item.skip();
 			item = saveImportItem(item);
 			return item;
 		}
@@ -235,14 +262,14 @@ public class DataImportService implements IDataImportService {
 
 		TimeSlot timeSlot = generalService
 				.getTimeSlot(item.getBatchWeekDay(), item.getBatchStartTime(), item.getBatchEndTime())
-				.orElseThrow(() -> new TSHException(
-						"Item id : " + itemId + " No Time Slot found : " + batchWeekDay + " : " + batchStartTime));
+				.orElseThrow(() -> new TSHException("No Time Slot found : " + DayOfWeek.of(batchWeekDay) + " : "
+						+ batchStartTime + " to " + batchEndTime));
 		Grades grade = generalService.getGrades(item.getGradeNumber())
-				.orElseThrow(() -> new TSHException("Item id : " + itemId + "Grade not found : " + gradeNumber));
+				.orElseThrow(() -> new TSHException("Grade not found : " + gradeNumber));
 		Course course = generalService.getCourses(item.getSubject())
-				.orElseThrow(() -> new TSHException("Item id : " + itemId + "Course not found : " + subject));
+				.orElseThrow(() -> new TSHException("Course not found : " + subject));
 		Teacher teacher = teacherService.getTeachers(item.getTeacher())
-				.orElseThrow(() -> new TSHException("Item id : " + itemId + "Teacher not found : " + teacherName));
+				.orElseThrow(() -> new TSHException("Teacher not found : " + teacherName));
 		TrainingType trainingType = generalService.getTrainingType(item.getLocation()).orElse(null);
 		Term term = generalService.getCurrentTerm().orElseThrow(() -> new TSHException("Current term not found"));
 		BatchDetails batchDetails = batchService.getBatchDetails(teacher, grade, course, timeSlot, trainingType, term)
@@ -270,6 +297,7 @@ public class DataImportService implements IDataImportService {
 		StudentBatches studentBatches = null;
 		if (student == null) { // New Student & new StudentBatch.
 			logger.info("No record found for Student : {}. Creating a new record", item.getName());
+			item.setMessage("New Student");
 			student = Student.getNewInstance(item, grade);
 			student = studentService.saveStudent(student);
 
@@ -287,6 +315,15 @@ public class DataImportService implements IDataImportService {
 																											// has been
 																											// changed.
 				logger.info("Old Batch and current bactch mismatch. Assigning new Batch to {}", item.getName());
+
+				// If studentBatches id is 0, then student existed but was not enrolled to this
+				// category of course.
+				// Else then probably the batch just changed.
+				if (studentBatches.getId() == 0)
+					item.setMessage("Existing - New Enrollment");
+				else
+					item.setMessage("Existing - Batch Changed");
+
 				StudentBatches newStudentBatch = StudentBatches.getNewInstance(student, course); // Create a new Student
 																									// Batch. We want to
 				logger.info("Ending {}'s enrollment to old batch - id : {}, for course : {} grade :{} and Term: {}",
@@ -301,6 +338,7 @@ public class DataImportService implements IDataImportService {
 				studentService.save(newStudentBatch);
 				logger.info("Import Data saved successfully to database.");
 			} else {
+				item.setMessage("Existing - No Change");
 				logger.info("Item {} already exist. Skiping this item", item.getName());
 			}
 		}
@@ -329,6 +367,106 @@ public class DataImportService implements IDataImportService {
 			topicService.saveAllTopics(topicsToSave.get("New"));
 		logger.info("All topics successfully saved to database.");
 		return topicsToSave;
+	}
+
+	@Override
+	public boolean wasImported(String name, String grade, String subject) {
+		List<ImportItem> items = importItemRepo.findByNameAndGradeAndSubject(name, grade, subject);
+		if (items.size() > 0)
+			return true;
+		else
+			return false;
+	}
+
+	@Override
+	public int getLastImportCycle() {
+		int cycle = 0;
+		try {
+			cycle = importItemRepo.getLastCycle();
+		} catch (Exception e) {
+			// Do nothing. There is no data in import item so this should be the first
+			// cycle. Return zero
+		}
+
+		return cycle;
+	}
+
+	public int getImportCycle() {
+		return importCycle;
+	}
+
+	private void setImportCycle(int importCycle) {
+		this.importCycle = importCycle;
+	}
+
+	@Override
+	public List<ImportItemTO> getAllImportedItems(int cycleNumber) {
+		List<ImportItem> importItemList = importItemRepo.findByCycle(cycleNumber);
+		ModelMapper mapper = new ModelMapper();
+		List<ImportItemTO> importItemTOList = importItemList.stream().map(it -> {
+			ImportItemTO itemTO = mapper.map(it, ImportItemTO.class);
+			try {
+				if (it.getBatchDate() != null) {
+					itemTO.setWeekday(TshUtil.getWeekDayAsString(it.getBatchDate()));
+					itemTO.setBatchDate(TshUtil.toString(it.getBatchDate()));
+				}
+			} catch (TSHException e) {
+				itemTO.setBatchDate(e.getMessage());
+			}
+			try {
+				if (it.getImportDate() != null)
+					itemTO.setImportDate(TshUtil.toString(it.getImportDate()));
+			} catch (TSHException e) {
+				itemTO.setImportDate(e.getMessage());
+			}
+			if (it.getBatchStartTime() != null)
+				itemTO.setBatchStartTime(TshUtil.formatTimeToHHmm24Hr(it.getBatchStartTime()));
+			return itemTO;
+		}).collect(Collectors.toList());
+		return importItemTOList;
+	}
+
+	@Override
+	public List<ImportStatistics> getImportStatistics(int cycle) {
+
+		List<IImportStats> stats = importItemRepo.getImportStatistics(cycle);
+		return stats.stream().map(s -> {
+			ImportStatistics st = new ImportStatistics();
+			st.setCount(Integer.parseInt(s.getCOUNT()));
+			st.setImportDesc(s.getIMPORTDESC());
+			st.setStatus(Integer.parseInt(s.getSTATUS()));
+			return st;
+		}).collect(Collectors.toList());
+	}
+
+	@Override
+	public String getImportDate(int cycle) throws TSHException {
+
+		Date importDate = importItemRepo.getImportDate(cycle);
+		return TshUtil.toString(importDate);
+	}
+
+	@Override
+	public ImportItemTO reImport(ReImportRequest request) throws TSHException, ParseException {
+
+		ImportItemTO returnResult = null;
+
+		ImportItem item = importItemRepo.findById(request.getId()).orElse(null);
+		if (item == null)
+			throw new TSHException("Item to Import not found.");
+
+		this.setImportCycle(item.getCycle());
+		item.setName(request.getName());
+		item.setGrade(request.getGrade());
+		item.setSubject(request.getSubject());
+		item.setTeacher(request.getTeacher());
+		Time t = Time.valueOf(request.getStart());
+		item.setBatchStartTime(t);
+		item.setBatchDate(TshUtil.toDate(request.getWeekday()));
+
+		this.importThisItem(item);
+		return returnResult;
+
 	}
 
 }

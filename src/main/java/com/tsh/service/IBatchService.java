@@ -47,4 +47,6 @@ public interface IBatchService extends TshService {
 
 	public List<BatchDetails> getAllBatchDetailsForUser(User loggedInUser, Teacher teacher) throws TSHException;
 
+	public List<BatchDetails> getAllActiveBatchDetails();
+
 }

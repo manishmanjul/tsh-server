@@ -50,12 +50,17 @@ public class ImportItem extends BaseEntity {
 	private int status;
 	@Column(name = "import_date")
 	private Date importDate;
+	@Column(name = "cycle")
+	private int cycle;
+	@Column(name = "message")
+	private String message;
 
 	private transient int gradeNumber;
 	public static int NEW_ITEM = 1;
 	public static int IN_PROGRESS = 2;
 	public static int SUCCESS = 3;
 	public static int FAILED = 4;
+	public static int SKIPPED = 5;
 
 	public ImportItem() {
 		super();
@@ -194,6 +199,22 @@ public class ImportItem extends BaseEntity {
 		return status;
 	}
 
+	public int getCycle() {
+		return cycle;
+	}
+
+	public void setCycle(int cycle) {
+		this.cycle = cycle;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
 	public String getStatusAsString() {
 		String status = null;
 		if (this.status == NEW_ITEM)
@@ -204,6 +225,8 @@ public class ImportItem extends BaseEntity {
 			return "Success";
 		if (this.status == FAILED)
 			return "Failed";
+		if (this.status == SKIPPED)
+			return "Skipped";
 		return status;
 	}
 
@@ -232,6 +255,7 @@ public class ImportItem extends BaseEntity {
 
 	public void startImport() {
 		this.status = ImportItem.IN_PROGRESS;
+		this.message = "Import in progress";
 	}
 
 	public boolean isInProgress() {
@@ -249,6 +273,7 @@ public class ImportItem extends BaseEntity {
 
 	public void failed() {
 		this.status = ImportItem.FAILED;
+		this.importDate = Calendar.getInstance().getTime();
 	}
 
 	public boolean hasFailedImport() {
@@ -257,9 +282,19 @@ public class ImportItem extends BaseEntity {
 
 	public void readyForImport() {
 		this.status = ImportItem.NEW_ITEM;
+		this.message = "New Item";
 	}
 
 	public boolean isReadyForImport() {
 		return this.status == ImportItem.NEW_ITEM;
+	}
+
+	public void skip() {
+		this.status = ImportItem.SKIPPED;
+		this.message = "Skipped";
+	}
+
+	public boolean isSkipped() {
+		return this.status == ImportItem.SKIPPED;
 	}
 }

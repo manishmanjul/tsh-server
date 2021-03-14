@@ -11,6 +11,7 @@ import com.tsh.entities.FeedbackCategory;
 import com.tsh.entities.StudentBatches;
 import com.tsh.entities.StudentFeedback;
 import com.tsh.entities.Teacher;
+import com.tsh.entities.TopicProgress;
 import com.tsh.entities.Topics;
 import com.tsh.entities.User;
 import com.tsh.exception.TSHException;
@@ -19,6 +20,7 @@ import com.tsh.library.dto.FeedbackCategoryTO;
 import com.tsh.library.dto.FeedbackTO;
 import com.tsh.library.dto.StudentFeedbackRequestTO;
 import com.tsh.library.dto.TopicsTO;
+import com.tsh.library.dto.UpdateFeedbackRequest;
 
 @Service
 public interface IFeedbackService {
@@ -34,6 +36,8 @@ public interface IFeedbackService {
 
 	List<StudentFeedback> getAllFeedbacks(StudentBatches studentBatches, Topics topic);
 
+	List<StudentFeedback> getAllFeedbacks(TopicProgress topicProgress, StudentBatches studentBatches);
+
 	public Feedback getFeedbackById(int feedbackId);
 
 	List<FeedbackCategory> getAllActiveFeedbackCategories(int grade);
@@ -42,14 +46,17 @@ public interface IFeedbackService {
 
 	public List<FeedbackCategoryTO> getEmptyFeedback(int grade);
 
-	public void processStudentFeedback(BatchDetails batchDetails, StudentFeedbackRequestTO inputData, User loggedinUser)
-			throws TSHException;
+	public void processStudentFeedback(BatchDetails batchDetails, StudentFeedbackRequestTO inputData, User loggedinUser,
+			List<TopicProgress> currTopicProgress) throws TSHException;
 
 	public StudentFeedback saveFeedback(StudentFeedback feedback) throws TSHException;
 
+	public void updateAndAddStudentFeedback(UpdateFeedbackRequest request, StudentBatches studentBatches,
+			User loggedInUser) throws TSHException;
+
 	public List<TopicsTO> populateAllFeedbacksWithProviders(List<TopicsTO> topicTOList, StudentBatches studentBatches);
 
-	public void deleteFeedback(DeleteFeedbackRequest request);
+	public void deleteFeedback(DeleteFeedbackRequest request, User loggedinUser);
 
 	public FeedbackCategoryTO addFeedbackCategory(FeedbackCategoryTO categoryTO);
 
@@ -60,5 +67,7 @@ public interface IFeedbackService {
 	public FeedbackTO toggleFeedbackItemState(FeedbackTO feedback) throws TSHException;
 
 	public FeedbackTO addFeedbackItem(FeedbackTO feedbackTO) throws TSHException;
+
+	public void clearFeedbacks(TopicProgress topicProgress, User loggedInUser, StudentBatches studentBatches);
 
 }

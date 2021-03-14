@@ -7,6 +7,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -56,6 +57,8 @@ public class OutlookImporter implements DataImporter {
 	private FindItemsResults<Appointment> appointments = null;
 	private List<ImportItem> importedData = new ArrayList<ImportItem>();
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
+	private String environment = "PROD";
+	private static final String PROD = "PROD";
 
 	@Autowired
 	private IProcessService processService;
@@ -72,17 +75,17 @@ public class OutlookImporter implements DataImporter {
 	@Override
 	public List<ImportItem> importData(Process parent) throws TSHException {
 		ProcessDetails step1 = processService.newProcessStep("Connecting to " + this.credentials + " Calender service",
-				1, 0.2, parent);
+				1, 0.35, parent);
 		this.connect();
 
-		ProcessDetails step2 = processService.closeOldAndCreateNewStep(step1, "Accessing Caledar data", 2, 0.6, parent);
+		ProcessDetails step2 = processService.closeOldAndCreateNewStep(step1, "Accessing Caledar data", 2, 1, parent);
 		this.setCalendarView();
 
 		ProcessDetails step3 = processService.closeOldAndCreateNewStep(step2, "Loadig Caledar Properties", 3, 1,
 				parent);
 		this.loadAllPropertySets();
 
-		ProcessDetails step4 = processService.closeOldAndCreateNewStep(step3, "Reading Calendar Data", 4, 0.5, parent);
+		ProcessDetails step4 = processService.closeOldAndCreateNewStep(step3, "Reading Calendar Data", 4, 1, parent);
 		this.processAllAppointments();
 
 		this.closeAll();
@@ -192,7 +195,7 @@ public class OutlookImporter implements DataImporter {
 	 * @throws Exception
 	 */
 	private void processAllAppointments() throws TSHException {
-		ImportItem item;
+		ImportItem item = null;
 		String bodyText = null;
 		DateFormat formatter = new SimpleDateFormat("d/MM/yyyy", Locale.ENGLISH);
 		DateFormat timeFormatter = new SimpleDateFormat("HH:mm");
@@ -200,16 +203,25 @@ public class OutlookImporter implements DataImporter {
 		logger.info("Processing appointment data and extracting required information.");
 		try {
 			for (Appointment app : appList) {
-//				logger.info(" " + i++);
-//				if(i == 37) {
-//					logger.info("Here");
-//				}
+
 				item = new ImportItem();
 				bodyText = MessageBody.getStringFromMessageBody(app.getBody());
 				if (bodyText == null || bodyText.length() > 100 || app.getSubject() == null || bodyText.length() == 0
 						|| app.getSubject().length() == 0 || app.getSubject().contains("Home work")
 						|| app.getSubject().contains("Home Work") || app.getSubject().contains("Homework")
 						|| app.getSubject().contains("HomeWork"))
+					continue;
+
+				if (app.getCategories().contains("Make-up") || app.getCategories().contains("Make-Up")
+						|| app.getCategories().contains("Makeup") || app.getCategories().contains("MakeUp")
+						|| app.getCategories().contains("Make up") || app.getCategories().contains("Make Up")
+						|| app.getCategories().contains("MAKE UP"))
+					continue;
+
+				if (app.getLocation().contains("Make-up") || app.getLocation().contains("Make-Up")
+						|| app.getLocation().contains("Makeup") || app.getLocation().contains("MakeUp")
+						|| app.getLocation().contains("Make up") || app.getLocation().contains("Make Up")
+						|| app.getLocation().contains("MAKE UP"))
 					continue;
 
 				bodyText = bodyText.replaceAll("\t", " ");
@@ -231,25 +243,48 @@ public class OutlookImporter implements DataImporter {
 				item.setTeacher(token.nextToken().trim());
 				item.setName(app.getSubject().trim());
 				item.setLocation(app.getLocation().trim());
-				item.setBatchDate(formatter.parse(formatter.format(app.getStart())));
-				item.setBatchStartTime(Time.valueOf(timeFormatter.format(app.getStart()) + ":00"));
-				item.setBatchEndTime(Time.valueOf(timeFormatter.format(app.getEnd()) + ":00"));
+
+				Date startDate, endDate;
+
+				if (getEnvironment().equalsIgnoreCase(OutlookImporter.PROD)) {
+					Calendar cal = Calendar.getInstance();
+					cal.setTime(app.getStart());
+					cal.add(Calendar.HOUR_OF_DAY, 11);
+//				cal.add(Calendar.MINUTE, -30);
+					startDate = cal.getTime();
+
+					Calendar cal2 = Calendar.getInstance();
+					cal2.setTime(app.getEnd());
+					cal2.add(Calendar.HOUR_OF_DAY, 11);
+//				cal2.add(Calendar.MINUTE, -30);
+					endDate = cal2.getTime();
+				} else {
+					startDate = TshUtil.convertToAEST(app.getStart());
+					endDate = TshUtil.convertToAEST(app.getEnd());
+				}
+
+				item.setBatchDate(formatter.parse(formatter.format(startDate)));
+				item.setBatchStartTime(Time.valueOf(timeFormatter.format(startDate) + ":00"));
+				item.setBatchEndTime(Time.valueOf(timeFormatter.format(endDate) + ":00"));
 				importedData.add(item);
 			}
 		} catch (ParseException e) {
 			logger.error("Error parsing appointment data - {}. Please comntact your administrator.", bodyText);
+			logger.error(item.toString());
 			logger.error(e.getLocalizedMessage());
 			TSHException t = new TSHException(e.getMessage());
 			t.setStackTrace(e.getStackTrace());
 			throw t;
 		} catch (ServiceLocalException e) {
 			logger.error("Error parsing appointment data - {}. Please comntact your administrator.", bodyText);
+			logger.error(item.toString());
 			logger.error(e.getLocalizedMessage());
 			TSHException t = new TSHException(e.getMessage());
 			t.setStackTrace(e.getStackTrace());
 			throw t;
 		} catch (Exception e) {
 			logger.error("Error parsing appointment data - {}. Please comntact your administrator.", bodyText);
+			logger.error(item.toString());
 			logger.error(e.getLocalizedMessage());
 			TSHException t = new TSHException(e.getMessage());
 			t.setStackTrace(e.getStackTrace());
@@ -298,4 +333,29 @@ public class OutlookImporter implements DataImporter {
 	public Date getEndDate() {
 		return this.endDate;
 	}
+
+	@Override
+	public void setStartDate(Date startDate) {
+		this.startDate = startDate;
+	}
+
+	@Override
+	public void setEndDate(Date endDate) {
+		this.endDate = endDate;
+	}
+
+	@Override
+	public void setStartAndEndDates(Date startDate, Date endDate) {
+		this.startDate = startDate;
+		this.endDate = endDate;
+	}
+
+	public String getEnvironment() {
+		return environment;
+	}
+
+	public void setEnvironment(String environment) {
+		this.environment = environment;
+	}
+
 }

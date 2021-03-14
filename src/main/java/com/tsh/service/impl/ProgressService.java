@@ -1,6 +1,7 @@
 package com.tsh.service.impl;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -169,9 +170,10 @@ public class ProgressService implements IProgressService {
 	}
 
 	@Override
-	public TopicProgress manageCurrentAndNextTopicProgress(BatchDetails batchDetails,
+	public List<TopicProgress> manageCurrentAndNextTopicProgress(BatchDetails batchDetails,
 			StudentFeedbackRequestTO inputData) throws TSHException {
 
+		List<TopicProgress> returnList = new ArrayList<>();
 		Topics currentTopic = topicService.getTopicById(inputData.getTodaysTopicId());
 		Topics nextTopic = topicService.getTopicById(inputData.getNextTopicId());
 		TopicStatus completed = topicService.getTopicStatusByStatus("Completed");
@@ -222,6 +224,8 @@ public class ProgressService implements IProgressService {
 			topicProgress = this.addTopicProgress(studentBatch.getStudent(), topicProgress); // Save the current topic
 																								// progress.
 
+			returnList.add(topicProgress);
+
 			if (topicProgress == null) {
 				logger.warn("Could not save topic progress for topic : {} - Topic SKIPPED -",
 						currentTopic.getDescription());
@@ -260,7 +264,7 @@ public class ProgressService implements IProgressService {
 						studentTO.getId());
 			}
 		}
-		return null;
+		return returnList;
 	}
 
 	@Override
@@ -280,6 +284,7 @@ public class ProgressService implements IProgressService {
 			return topicTO;
 		}).collect(Collectors.toList());
 
+		topicTOList = topicTOList.stream().distinct().collect(Collectors.toList());
 		return topicTOList;
 	}
 
@@ -328,6 +333,11 @@ public class ProgressService implements IProgressService {
 		Date today = TshUtil.getCurrentDate();
 		return batchProgressRepo.findMaxRecordsForTeacherWithPlannedStartDateOrStartDateGreaterThan(today,
 				teacher.getId());
+	}
+
+	@Override
+	public TopicProgress getTopicProgress(int id) {
+		return topicProgressRepo.findById(id).orElse(null);
 	}
 
 }

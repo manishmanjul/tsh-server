@@ -13,6 +13,9 @@ public class FeedbackProvider {
 	private Date feedbackDate;
 	private StudentBatches studentBatch;
 	private UserTO userTO;
+	private TopicProgressTO topicProgress;
+	private UserTO updatedBy;
+	private String updatedOn;
 
 	public TeacherTO getTeacher() {
 		return teacher;
@@ -61,11 +64,35 @@ public class FeedbackProvider {
 		this.userTO = userTO;
 	}
 
+	public TopicProgressTO getTopicProgress() {
+		return topicProgress;
+	}
+
+	public void setTopicProgress(TopicProgressTO topicProgress) {
+		this.topicProgress = topicProgress;
+	}
+
+	public UserTO getUpdatedBy() {
+		return updatedBy;
+	}
+
+	public void setUpdatedBy(UserTO updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+
+	public String getUpdatedOn() {
+		return updatedOn;
+	}
+
+	public void setUpdatedOn(String updatedOn) {
+		this.updatedOn = updatedOn;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((teacher == null) ? 0 : teacher.hashCode());
+		result = prime * result + ((topicProgress == null) ? 0 : topicProgress.hashCode());
 		return result;
 	}
 
@@ -78,10 +105,10 @@ public class FeedbackProvider {
 		if (getClass() != obj.getClass())
 			return false;
 		FeedbackProvider other = (FeedbackProvider) obj;
-		if (teacher == null) {
-			if (other.teacher != null)
+		if (topicProgress == null) {
+			if (other.topicProgress != null)
 				return false;
-		} else if (!teacher.equals(other.teacher))
+		} else if (!topicProgress.equals(other.topicProgress))
 			return false;
 		return true;
 	}
